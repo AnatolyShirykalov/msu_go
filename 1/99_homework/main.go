@@ -8,15 +8,19 @@ import (
 func ReturnInt() int {
 	return 1
 }
+
 func ReturnFloat() float32 {
 	return 1.1
 }
+
 func ReturnIntArray() [3]int {
 	return [3]int{1, 3, 4}
 }
+
 func ReturnIntSlice() []int {
 	return []int{1, 2, 3}
 }
+
 func IntSliceToString(sl []int) string {
 	var r string
 	for _, val := range sl {
