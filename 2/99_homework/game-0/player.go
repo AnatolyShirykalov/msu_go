@@ -5,25 +5,14 @@ import (
 	"sort"
 )
 
-type Player struct {
-	InRoom  *Room
-	RefBack *Back
-}
-
 func (p *Player) Apply(thi string, subj string) string {
 	room := p.InRoom
-	if room.Things[thi] {
-		return "не к чему применить"
-	}
+	//Appliable
 	if p.RefBack.Apply(thi, subj) == "" {
-		flag := -1
-		for i, link := range p.InRoom.Links() {
+		for _, link := range room.Links() {
 			if link.Rfrom.Name == room.Name && link.Lock {
-				flag = i
+				link.Lock = false
 			}
-		}
-		if flag > -1 {
-			room.Game.Links[flag+1].Lock = false
 		}
 		return subj + " открыта"
 	} else {

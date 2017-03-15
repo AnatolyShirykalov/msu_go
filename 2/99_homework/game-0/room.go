@@ -8,9 +8,9 @@ func (r *Room) Type() string {
 	return "комнаты"
 }
 
-func (r *Room) Links() []Link {
-	ret := make([]Link, 0, 4)
-	for _, link := range r.Game.Links {
+func (r *Room) Links() []*Link {
+	ret := make([]*Link, 0, 4)
+	for _, link := range r.Game.GetLinks() {
 		if link.Rfrom.Name == r.Name {
 			ret = append(ret, link)
 		}

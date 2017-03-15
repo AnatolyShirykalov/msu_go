@@ -34,3 +34,8 @@ type Room struct {
 	Act      string
 	// Watch    bool
 }
+
+type Player struct {
+	InRoom  *Room
+	RefBack *Back
+}

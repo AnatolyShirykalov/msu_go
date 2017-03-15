@@ -7,6 +7,14 @@ import (
 
 var g Game
 
+func (g *Game) GetLinks() (Ret []*Link) {
+	Ret = make([]*Link, 0, len(g.Links))
+	for i := range g.Links {
+		Ret = append(Ret, &g.Links[i])
+	}
+	return
+}
+
 func (g *Game) GetRoom(name string) *Room {
 	r, ok := g.Rooms[name]
 	if ok {
