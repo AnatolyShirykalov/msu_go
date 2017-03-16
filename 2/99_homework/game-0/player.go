@@ -5,92 +5,74 @@ import (
 	"sort"
 )
 
-func (p *Player) Apply(thi string, subj string) string {
-	room := p.InRoom
-	//Appliable
-	if p.RefBack.Apply(thi, subj) == "" {
-		for _, link := range room.Links() {
-			if link.Rfrom.Name == room.Name && link.Lock {
-				link.Lock = false
-			}
+func (rfro *Room) Passability(rto *Room) string {
+	Flag, ok := rfro.LinkRoom[rto.Name]
+	if !ok {
+		msg, ok := rto.Msg["notlinked"]
+		if !ok {
+			panic(HaveNotMsg(rfro, "notlinked"))
+		} else {
+			return msg
 		}
-		return subj + " открыта"
-	} else {
-		return p.RefBack.Apply(thi, subj)
 	}
-}
-
-func (p *Player) AddThing(thi string) string {
-	room := p.InRoom
-	if !room.Things[thi] {
-		return "нет такого"
+	if Flag == "lock" {
+		if msg, ok := rto.Msg["locked"]; !ok {
+			panic(HaveNotMsg(rto, "locked"))
+		} else {
+			return msg
+		}
 	}
-	room.Things[thi] = false
-	return p.RefBack.Take(thi)
-}
-
-func (p *Player) AddBack(thi string) string {
-	room := p.InRoom
-	if !room.Things[thi] {
-		return "нет такого"
+	if _, ok := rto.Msg["enter"]; !ok {
+		panic(HaveNotMsg(rto, "enter"))
 	}
-	p.RefBack = &Back{
-		Things: map[string]bool{
-			"ключи":     false,
-			"конспекты": false,
-		},
-	}
-	room.Things[thi] = false
-	return "вы одели: " + thi
+	return ""
 }
 
 func (p *Player) MoveTo(r *Room) string {
-	if !p.InRoom.LinkedWith(r) {
-		msg, ok := r.Msg["notlinked"]
-		if !ok {
-			panic(HaveNotMsg(p.InRoom, "notlinked"))
-		} else {
-			return msg
-		}
-	}
-	if !p.InRoom.UnlockedLinkTo(r) {
-		if msg, ok := r.Msg["locked"]; !ok {
-			panic(HaveNotMsg(r, "locked"))
-		} else {
-			return msg
-		}
-	}
-	if msg, ok := r.Msg["enter"]; !ok {
-		panic(HaveNotMsg(r, "enter"))
-	} else {
-		// p.InRoom.Watch = false
+	passability := p.InRoom.Passability(r)
+	if passability == "" {
 		p.InRoom = r
-		for i, link := range r.Links() {
-			if i == 0 {
+		msg := r.Msg["enter"]
+		var keys []string
+		for k, value := range r.LinkRoom {
+			if value != "" {
+				keys = append(keys, k)
+			}
+		}
+		sort.Strings(keys)
+		if len(keys) == len(p.InRoom.Game.Priory) {
+			keys = p.InRoom.Game.Priory
+		}
+		flag := 0
+		for _, link := range keys {
+			if flag == 0 {
 				msg = fmt.Sprintf("%s можно пройти - ", msg)
 			} else {
 				msg = fmt.Sprintf("%s, ", msg)
 			}
-			name := link.Name
-			if len(name) == 0 {
-				name = link.Rto.Name
+			name := link
+			if Aliase, ok := r.Game.Aliases[r.Name]; ok {
+				name = Aliase
 			}
 			msg = fmt.Sprintf("%s%s", msg, name)
+			flag += 1
 		}
 		return msg
+	} else {
+		return passability
 	}
 }
 
 func (p *Player) View() string {
 	msg := ""
 	var keys []string
-	flag := 0
 	for k, value := range p.InRoom.Things {
 		if value && k != p.RefBack.Type() {
 			keys = append(keys, k)
 		}
 	}
 	sort.Strings(keys)
+	flag := 0
 	for _, k := range keys {
 		value := p.InRoom.Things[k]
 		if flag == 0 {

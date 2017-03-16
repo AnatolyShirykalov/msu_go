@@ -1,16 +1,11 @@
 package game
 
 type ObjSubj struct {
-	Name  string
-	Key   string
-	Exist bool
-	Lock  bool
-}
-type Link struct {
-	Rfrom *Room
-	Rto   *Room
-	Name  string
-	Lock  bool
+	Name     string
+	Key      string
+	Exist    bool
+	Lock     bool
+	NameRoom string
 }
 
 type Back struct {
@@ -19,8 +14,8 @@ type Back struct {
 }
 
 type Game struct {
+	Priory  []string
 	Rooms   map[string]*Room
-	Links   []Link
 	Players []Player
 	Aliases map[string]string
 }
@@ -32,10 +27,18 @@ type Room struct {
 	Things   map[string]bool
 	Subjects map[string]ObjSubj
 	Act      string
-	// Watch    bool
+	LinkRoom map[string]string
 }
 
 type Player struct {
 	InRoom  *Room
 	RefBack *Back
+}
+
+func (r *Room) Label() string {
+	return r.Name
+}
+
+func (r *Room) Type() string {
+	return "комнаты"
 }

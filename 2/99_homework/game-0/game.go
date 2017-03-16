@@ -7,14 +7,6 @@ import (
 
 var g Game
 
-func (g *Game) GetLinks() (Ret []*Link) {
-	Ret = make([]*Link, 0, len(g.Links))
-	for i := range g.Links {
-		Ret = append(Ret, &g.Links[i])
-	}
-	return
-}
-
 func (g *Game) GetRoom(name string) *Room {
 	r, ok := g.Rooms[name]
 	if ok {
@@ -65,8 +57,8 @@ func handleCommand(command string) string {
 
 func initGame() {
 	g = Game{
-		Rooms:   make(map[string]*Room),
-		Links:   make([]Link, 0, 20),
+		Rooms: make(map[string]*Room),
+		// Links:   make([]Link, 0, 20),
 		Players: make([]Player, 0, 1),
 		Aliases: make(map[string]string),
 	}
@@ -84,7 +76,9 @@ func initGame() {
 			}, Things: map[string]bool{
 				"чай": true,
 			}, Subjects: map[string]ObjSubj{
-				"ничего": {Exist: true, Lock: true}},
+				"ничего": {Exist: true, Lock: true},
+			}, LinkRoom: map[string]string{
+				"коридор": "exist"},
 		},
 		"коридор": {
 			Game: &g,
@@ -96,7 +90,12 @@ func initGame() {
 			}, Things: map[string]bool{
 				"ничего": true,
 			}, Subjects: map[string]ObjSubj{
-				"шкаф": {Exist: true, Lock: true, Key: "кот"}},
+				"шкаф":  {Exist: true, Lock: true, Key: "кот"},
+				"дверь": {Exist: true, Lock: true, Key: "ключи", NameRoom: "улица"},
+			}, LinkRoom: map[string]string{
+				"кухня":   "exist",
+				"комната": "exist",
+				"улица":   "lock"},
 		},
 		"комната": {
 			Game: &g,
@@ -112,7 +111,9 @@ func initGame() {
 				"конспекты": true,
 				"рюкзак":    true,
 			}, Subjects: map[string]ObjSubj{
-				"тумбочка": {Exist: true, Lock: true, Key: "хлопок в ладоши"}},
+				"тумбочка": {Exist: true, Lock: true, Key: "хлопок в ладоши"},
+			}, LinkRoom: map[string]string{
+				"коридор": "exist"},
 		},
 		"улица": {
 			Game: &g,
@@ -123,25 +124,24 @@ func initGame() {
 				"lookaround": "ты находишься на улице, как же прекрасен свежый воздух",
 				"locked":     "дверь закрыта",
 			}, Subjects: map[string]ObjSubj{
-				"дверь": {Exist: true, Lock: true, Key: "ключи"},
-				"шкаф":  {Exist: true, Lock: true, Key: "кот"}},
+				"шкаф": {Exist: true, Lock: true, Key: "кот"},
+			}, LinkRoom: map[string]string{
+				"коридор": "exist"},
 		},
 	}
 
-	g.Aliases = map[string]string{
-		"домой": "коридор",
-	}
-	g.Players = []Player{
-		{InRoom: g.GetRoom("кухня")},
+	g.Priory = []string{
+		"кухня",
+		"комната",
+		"улица",
 	}
 
-	g.Links = []Link{
-		{Rfrom: g.GetRoom("кухня"), Rto: g.GetRoom("коридор")},
-		{Rfrom: g.GetRoom("коридор"), Rto: g.GetRoom("кухня")},
-		{Rfrom: g.GetRoom("коридор"), Rto: g.GetRoom("комната")},
-		{Rfrom: g.GetRoom("коридор"), Rto: g.GetRoom("улица"), Lock: true},
-		{Rfrom: g.GetRoom("комната"), Rto: g.GetRoom("коридор")},
-		{Rfrom: g.GetRoom("улица"), Rto: g.GetRoom("коридор"), Name: "домой"},
+	g.Aliases = map[string]string{
+		"улица": "домой",
+	}
+
+	g.Players = []Player{
+		{InRoom: g.GetRoom("кухня")},
 	}
 }
 
