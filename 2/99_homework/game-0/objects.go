@@ -1,7 +1,6 @@
 package game
 
 type ObjSubj struct {
-	Name     string
 	Key      string
 	Exist    bool
 	Lock     bool
