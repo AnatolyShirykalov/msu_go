@@ -14,10 +14,10 @@ func main() {
 	// Создаем канал для взаимодействия игроков
 	table := make(chan *Ball)
 	// Старутем пару игроков
+	table <- new(Ball) // Запуска мяча в игру
 	go player("ping", table)
 	go player("pong", table)
 
-	// table <- new(Ball) // Запуска мяча в игру
 	time.Sleep(1 * time.Second)
 	<-table // Конец игры, забираем мяч
 }

@@ -62,6 +62,8 @@ func TestRoundRobinBalancerMany(t *testing.T) {
 				defer wg.Done()
 				for req := 0; req < test.requests; req++ {
 					balancer.GiveNode()
+                                        fmt.Println(balancer.GiveStat())
+                                        fmt.Scanln()
 				}
 			}()
 		}
