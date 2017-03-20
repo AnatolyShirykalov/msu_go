@@ -31,7 +31,7 @@ func boring1(wg *sync.WaitGroup, die chan bool) <-chan string { // Возвра�
 func main() {
 	die := make(chan bool)
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
 	res1 := boring1(&wg, die)
 	res2 := boring1(&wg, die)
 
@@ -40,6 +40,7 @@ func main() {
 		fmt.Printf("1st say: %q\n", <-res1)
 		fmt.Printf("2nd say: %q\n", <-res2)
 	}
+	die <- true
 	die <- true
 	// Ждем, пока все горутины закончат выполняться
 	wg.Wait()
