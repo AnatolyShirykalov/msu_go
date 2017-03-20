@@ -7,6 +7,11 @@ import (
 
 var g Game
 
+// addPlayer(players["Tristan"])
+// addPlayer(players["Izolda"])
+func addPlayer(p *Player) {
+
+}
 func (g *Game) GetRoom(name string) *Room {
 	r, ok := g.Rooms[name]
 	if ok {

@@ -1,111 +1,41 @@
 package main
 
-import (
-	"fmt"
-	"time"
-)
-
-const timeout = 100 * time.Millisecond
-
+//есть некоторое количество серверов, нагрузка на которых распределяется методом "по кругу"
+//есть балансер, который должен распределить запросы равномерно
 type RoundRobinBalancer struct {
-	pool  []int
-	mu    sync.Mutex
-	size  int
-	tasks chan Task
-	kill  chan struct{}
-	wg    sync.WaitGroup
+	stat    []int
+	next    int
+	tasks   chan int
+	directs chan int
 }
 
-/*Init - инициализирует собственно балансер -
-представьте что устанавливает соединения с указанным количеством серверов*/
+//Init - инициализирует собственно балансер - представьте что устанавливает соединения с указанным колчиеством серверов.
 func (r *RoundRobinBalancer) Init(n int) {
-	*r = RoundRobinBalancer{
-		pool: make([]int, n),
-		size: 4,
-		// Канал задач - буферизированный, чтобы основная программа не блокировалась при постановке задач
-		tasks: make(chan Task, 128),
-		// Канал kill для убийства "лишних воркеров"
-		kill: make(chan struct{}),
-	}
-	// fmt.Println(r.uu)
-	return
-}
+	r.stat = make([]int, n)
+	r.next = 0
+	r.tasks = make(chan int, 1)
+	r.directs = make(chan int, 1)
 
-// GiveStat - даёт статистику, сколько запросов пришло на каждый из серверов.
-func (r *RoundRobinBalancer) GiveStat() (statist []int) {
-	return r.pool
-}
+	go func() {
+		for range r.tasks {
 
-// GiveNode - эта функция вызывается, когда пришел запрос. мы получаем номер сервера, на который идти.
-func (r *RoundRobinBalancer) GiveNode() (n int) {
-	n = r.size
-	fmt.Println(r.size)
+			r.stat[r.next]++
+			r.next = (r.next + 1) % len(r.stat)
 
-	return
-}
+			r.directs <- r.next
 
-type Pool struct {
-	mu    sync.Mutex
-	size  int
-	tasks chan Task
-	kill  chan struct{}
-	wg    sync.WaitGroup
-}
-
-// Скроем внутреннее усройство за конструктором, пользователь может влиять только на размер пула
-func NewPool(size int) *Pool {
-	pool := &Pool{
-		// Канал задач - буферизированный, чтобы основная программа не блокировалась при постановке задач
-		tasks: make(chan Task, 128),
-		// Канал kill для убийства "лишних воркеров"
-		kill: make(chan struct{}),
-	}
-	// Вызовем метод resize, чтобы установить соответствующий размер пула
-	pool.Resize(size)
-	return pool
-}
-
-// Жизненный цикл воркера
-func (p *Pool) worker() {
-	defer p.wg.Done()
-	for {
-		select {
-		// Если есть задача, то ее нужно обработать
-		case task, ok := <-p.tasks:
-			if !ok {
-				return
-			}
-			task.Execute()
-			// Если пришел сигнал умирать, выходим
-		case <-p.kill:
-			return
 		}
-	}
+	}()
 }
 
-func (p *Pool) Resize(n int) {
-	// Захватывам лок, чтобы избежать одновременного изменения состояния
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	for p.size < n {
-		p.size++
-		p.wg.Add(1)
-		go p.worker()
-	}
-	for p.size > n {
-		p.size--
-		p.kill <- struct{}{}
-	}
+//GiveStat - даёт статистику, сколько запросов пришло на каждый из серверов.
+func (r *RoundRobinBalancer) GiveStat() []int {
+	return r.stat
 }
 
-func (p *Pool) Close() {
-	close(p.tasks)
-}
+//GiveNode - эта функция фвзывается, когда пришел запрос. мы получаем номер сервера, на который идти.
+func (r *RoundRobinBalancer) GiveNode() int {
 
-func (p *Pool) Wait() {
-	p.wg.Wait()
-}
-
-func (p *Pool) Exec(task Task) {
-	p.tasks <- task
+	r.tasks <- 1
+	return <-r.directs
 }
