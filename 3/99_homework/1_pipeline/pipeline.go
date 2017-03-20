@@ -1,12 +1,3 @@
-// package pipeline
-
-// type job func(in, out chan interface{})
-
-// //функция последовательно выполняющя все переданные операции
-// func Pipe(funcs ...job) {
-
-// 	return
-// }
 package pipeline
 
 import (
