@@ -34,7 +34,7 @@ func TestMain(t *testing.T) {
 	expected := []interface{}{0, 30, 60, 90}
 
 	Pipe(case1...)
-        fmt.Println(res)
+	fmt.Println(res)
 	for r := range res {
 		if !reflect.DeepEqual(res[r], expected[r]) {
 			t.Errorf("Failed output")
