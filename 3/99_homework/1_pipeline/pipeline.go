@@ -9,18 +9,19 @@ type job func(in, out chan interface{})
 
 func Pipe(funcs ...job) {
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(len(funcs))
 	chs := make([]chan interface{}, len(funcs))
-	for i, fun := range funcs {
+	for i, _ := range funcs {
 		chs[i] = make(chan interface{})
-		if i == 0 {
-			go func() {
-				funcs[0](chs[0], chs[0])
-				wg.Done()
-			}()
-			continue
-		}
-		go fun(chs[i-1], chs[i])
+		go func(j int) {
+			k := j - 1
+			if j == 0 {
+				k = 0
+			}
+			funcs[j](chs[k], chs[j])
+			close(chs[j])
+			wg.Done()
+		}(i)
 	}
 	wg.Wait()
 	return
