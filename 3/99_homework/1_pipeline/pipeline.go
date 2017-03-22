@@ -1,20 +1,25 @@
 package pipeline
 
-import (
-	"time"
-)
+import "sync"
 
 type job func(in, out chan interface{})
 
 func Pipe(funcs ...job) {
-	slChan := make([]chan interface{}, len(funcs))
-	for i, fun := range funcs {
-		slChan[i] = make(chan interface{})
-		if i == 0 {
-			go fun(slChan[0], slChan[0])
-			continue
-		}
-		go fun(slChan[i-1], slChan[i])
+	var wg sync.WaitGroup
+	chs := make([]chan interface{}, len(funcs))
+	wg.Add(len(funcs))
+	for i := range funcs {
+		chs[i] = make(chan interface{})
+		go func(k int) {
+			if k == 0 {
+				funcs[0](chs[0], chs[0])
+			} else {
+				funcs[k](chs[k-1], chs[k])
+			}
+			close(chs[k])
+			wg.Done()
+		}(i)
 	}
-	time.Sleep(1 * time.Microsecond)
+	wg.Wait()
+	return
 }

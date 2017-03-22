@@ -5,76 +5,72 @@ import (
 	"strings"
 )
 
-var g Game
+var G Game
 
 // addPlayer(players["Tristan"])
+// g := Game{
+// 	Rooms: make(map[string]*Room),
+// 	// Links:   make([]Link, 0, 20),
+// 	Players: make(map[string]*Player),
+// 	Aliases: make(map[string]string),
+// }
 // addPlayer(players["Izolda"])
+//создание игрока
 func addPlayer(p *Player) {
-
+	// G.Players[p.Name] = p
+	// fmt.Println(p.Name)
+	G.Players[p.Name] = p
+	p.InRoom = GetRoom("кухня")
+	// fmt.Println(len(G.Players))
 }
-func (g *Game) GetRoom(name string) *Room {
-	r, ok := g.Rooms[name]
+func GetRoom(name string) *Room {
+	// fmt.Println(G.Rooms[name].Name)
+	r, ok := G.Rooms[name]
 	if ok {
 		return r
 	} else {
-		alias, ok1 := g.Aliases[name]
+		alias, ok1 := G.Aliases[name]
 		if ok1 {
-			return g.GetRoom(alias)
+			return GetRoom(alias)
 		} else {
 			panic(fmt.Sprintf("Не могу найти комнату по ключу %s", name))
 		}
 	}
 }
 
-func handleCommand(command string) string {
-	gamer := &g.Players[0]
-	// gamer1 := &g.Players[1]
-	c := strings.Split(command, " ")
-	switch c[0] {
-	case "осмотреться":
-		return gamer.View()
-	case "идти":
-		return gamer.MoveTo(g.GetRoom(c[1]))
-	case "надеть":
-		{
-			if c[1] != "рюкзак" {
-				panic("Нельзя надеть " + c[1])
-			}
-			return gamer.AddBack(c[1])
-		}
-	case "взять":
-		{
-			if c[1] == "рюкзак" {
-				panic("Нельзя взять " + c[1])
-			}
-			if gamer.RefBack == nil {
-				return "некуда класть"
-			}
-			return gamer.AddThing(c[1])
-		}
-	case "применить":
-		{
-			return gamer.Apply(c[1], c[2])
-		}
-	// case "сказать":
-	// 	return gamer.Say(c[1:])
-	// case "сказать_игроку":
-	// 	return gamer.Tell(c[1])
-	default:
-		return "неизвестная команда"
-	}
-}
+// type Player struct {
+// 	InRoom  *Room
+// 	RefBack *Back
+// 	msg     chan string
+// 	Name    string
+// }
 
+func NewPlayer(name string) (player *Player) {
+	G.Players = map[string]*Player{
+		name: {
+			Name: name,
+			msg:  make(chan string),
+		},
+	}
+	// G.Players[name] = &Player{
+	// 	Name: name,
+	// 	msg:  make(chan string),
+	// }
+	// G.Players[name].Name = name
+	// fmt.Println(G.Players[na\])
+	// G.Players[name]=&Player{Name:}
+	// G.Players[name].msg = make(chan string)
+	return G.Players[name]
+}
 func initGame() {
-	g = Game{
+	G = Game{
 		Rooms: make(map[string]*Room),
 		// Links:   make([]Link, 0, 20),
-		Players: make([]Player, 0, 1),
+		Players: make(map[string]*Player),
 		Aliases: make(map[string]string),
 	}
-	g.Rooms = map[string]*Room{
+	G.Rooms = map[string]*Room{
 		"кухня": {
-			Game: &g,
 			Name: "кухня",
 			Act:  "идти в универ. ",
 			Msg: map[string]string{
@@ -91,7 +87,6 @@ func initGame() {
 				"коридор": "exist"},
 		},
 		"коридор": {
-			Game: &g,
 			Name: "коридор",
 			Msg: map[string]string{
 				"notlinked": "нет пути коридор",
@@ -108,7 +103,6 @@ func initGame() {
 				"улица":   "lock"},
 		},
 		"комната": {
-			Game: &g,
 			Name: "комната",
 			Msg: map[string]string{
 				"notlinked":  "нет пути в комната",
@@ -126,7 +120,6 @@ func initGame() {
 				"коридор": "exist"},
 		},
 		"улица": {
-			Game: &g,
 			Name: "улица",
 			Msg: map[string]string{
 				"notlinked":  "нет пути улица",
@@ -139,19 +132,62 @@ func initGame() {
 				"коридор": "exist"},
 		},
 	}
-
-	g.Priory = []string{
+	G.Priory = []string{
 		"кухня",
 		"комната",
 		"улица",
 	}
 
-	g.Aliases = map[string]string{
+	G.Aliases = map[string]string{
 		"улица": "домой",
 	}
+}
+func (gamer *Player) HandleInput(command string) {
+	// gamer.msg := make(chan string)
+	c := strings.Split(command, " ")
+	switch c[0] {
+	case "осмотреться":
+		// fmt.Println("ghbj")
+		gamer.msg <- gamer.View()
+		return
+	case "идти":
+		gamer.msg <- gamer.MoveTo(GetRoom(c[1]))
+		return
+	case "надеть":
+		{
+			if c[1] != "рюкзак" {
+				panic("Нельзя надеть " + c[1])
+			}
+			gamer.msg <- gamer.AddBack(c[1])
+		}
+		return
+	case "взять":
+		{
+			if c[1] == "рюкзак" {
+				panic("Нельзя взять " + c[1])
+			}
+			if gamer.RefBack == nil {
+				gamer.msg <- "некуда класть"
+			} else {
+				gamer.msg <- gamer.AddThing(c[1])
 
-	g.Players = []Player{
-		{InRoom: g.GetRoom("кухня")},
+			}
+			return
+		}
+	case "применить":
+		{
+			gamer.msg <- gamer.Apply(c[1], c[2])
+			return
+		}
+	case "сказать":
+		gamer.msg <- gamer.Say(c[1:])
+		return
+	case "сказать_игроку":
+		gamer.msg <- gamer.Tell(c[1:])
+		return
+	default:
+		gamer.msg <- "неизвестная команда"
+		return
 	}
 }
 

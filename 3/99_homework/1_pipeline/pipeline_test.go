@@ -47,6 +47,7 @@ func TestMain(t *testing.T) {
 		job(func(in, out chan interface{}) {
 			for _, word := range []string{"Hello", "World"} {
 				out <- word
+				fmt.Println(word)
 			}
 		}),
 		job(func(in, out chan interface{}) {

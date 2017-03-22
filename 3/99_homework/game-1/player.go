@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // players := map[string]*Player{
@@ -14,8 +15,32 @@ import (
 // 	for lastOutput["Tristan"] = range output {
 // 	}
 // }()
-func (p *Player) GetOutput() string {
 
+func (p *Player) GetOutput() chan string {
+	// select {
+	// case <-p.msg:
+	return p.msg
+	// }
+	// return
+}
+
+// у каждого игрока есть метод, который запускает рутину и возращает канал в которой будет возвращать ответы
+func (p *Player) Say(command []string) string {
+
+	return ""
+}
+
+func (p *Player) Tell(command []string) string {
+
+	if G.Players[command[0]] == nil {
+		return "тут нет такого игрока"
+	}
+
+	if len(command) == 1 {
+		return p.Name + " выразительно молчит, смотря на вас"
+	}
+
+	return p.Name + "говорит вам: " + strings.Join(command, " ")
 }
 
 func (rfro *Room) Passability(rto *Room) string {
@@ -53,8 +78,8 @@ func (p *Player) MoveTo(r *Room) string {
 			}
 		}
 		sort.Strings(keys)
-		if len(keys) == len(p.InRoom.Game.Priory) {
-			keys = p.InRoom.Game.Priory
+		if len(keys) == len(G.Priory) {
+			keys = G.Priory
 		}
 		flag := 0
 		for _, link := range keys {
@@ -64,7 +89,7 @@ func (p *Player) MoveTo(r *Room) string {
 				msg = fmt.Sprintf("%s, ", msg)
 			}
 			name := link
-			if Aliase, ok := r.Game.Aliases[r.Name]; ok {
+			if Aliase, ok := G.Aliases[r.Name]; ok {
 				name = Aliase
 			}
 			msg = fmt.Sprintf("%s%s", msg, name)
@@ -123,5 +148,19 @@ func (p *Player) View() string {
 		msg = "пустая комната. "
 	}
 	msg += p.InRoom.Msg["end"]
+	// if len(G.Players) > 1 {
+	// fmt.Println("dd")
+
+	for name, exist := range G.Players {
+		if exist != nil {
+			if name != p.Name {
+				msg += ". Кроме вас тут ещё " + name
+				break
+			}
+		}
+
+	}
+	// fmt.Println(msg)
+	// }
 	return msg
 }
