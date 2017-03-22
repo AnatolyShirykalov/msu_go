@@ -12,8 +12,9 @@ type Ball struct{ hits int }
 
 func main() {
 	// Создаем канал для взаимодействия игроков
-	table := make(chan *Ball)
+	table := make(chan *Ball, 2)
 	// Старутем пару игроков
+	table <- new(Ball) // Запуска мяча в игру
 	go player("ping", table)
 	go player("pong", table)
 	table <- new(Ball) // Запуска мяча в игру

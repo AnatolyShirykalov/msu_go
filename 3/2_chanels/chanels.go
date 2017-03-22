@@ -10,14 +10,20 @@ var c chan int
 
 func main() {
 	// Создаем канал
-	c := make(chan string)
+	c := make(chan string, 2)
 	// стартуем пишущую горутину
 	go greet(c)
 	for i := 0; i < 5; i++ {
 		// Читаем пару строк из канала
-		fmt.Println(<-c, ",", <-c)
-	}
+		fmt.Println("1ree")
 
+		fmt.Println(<-c, "f")
+		fmt.Println("2ree")
+		fmt.Println("vjbkl", <-c)
+		fmt.Println("3ree")
+
+	}
+	fmt.Println("ree")
 	stuff := make(chan int, 7)
 	for i := 0; i < 19; i = i + 3 {
 		stuff <- i
@@ -31,8 +37,12 @@ func greet(c chan<- string) {
 	for {
 		// и пишем в канал пару строк
 		// Подпрограмма будет заблокирована до того, как кто-то захочет прочитать из канала
+		fmt.Println("111ddd")
+
 		c <- fmt.Sprintf("Владыка")
+		fmt.Println("22ddd")
 		c <- fmt.Sprintf("Штурмовик")
+		fmt.Println("3ddd")
 	}
 }
 

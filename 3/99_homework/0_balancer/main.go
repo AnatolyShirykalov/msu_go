@@ -1,13 +1,5 @@
 package main
 
-import (
-	"fmt"
-)
-
-func main() {
-	fmt.Println("asd")
-}
-
 //есть некоторое количество серверов, нагрузка на которых распределяется методом "по кругу"
 //есть балансер, который должен распределить запросы равномерно
 type RoundRobinBalancer struct {
@@ -19,15 +11,20 @@ type RoundRobinBalancer struct {
 
 //Init - инициализирует собственно балансер - представьте что устанавливает соединения с указанным колчиеством серверов.
 func (r *RoundRobinBalancer) Init(n int) {
-	r.stat = make([]int, n, n)
+
+	r.stat = make([]int, n)
 	r.next = 0
 	r.tasks = make(chan int, 1)
 	r.directs = make(chan int, 1)
+
 	go func() {
-		for task := range r.tasks {
-			r.stat[r.next] += task
-			r.directs <- r.next
+		for range r.tasks {
+
+			r.stat[r.next]++
 			r.next = (r.next + 1) % len(r.stat)
+
+			r.directs <- r.next
+
 		}
 	}()
 }

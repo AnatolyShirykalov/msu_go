@@ -21,6 +21,7 @@ func boring1(wg *sync.WaitGroup, die chan bool) <-chan string { // Возвра�
 			case <-die:
 				fmt.Println("Jobs done!")
 				wg.Done()
+				// уменьшает внутрений счетчик на 1
 				return
 			}
 		}
@@ -43,5 +44,6 @@ func main() {
 	die <- true
 	die <- true
 	// Ждем, пока все горутины закончат выполняться
+	// пока счетчик не равен нулю
 	wg.Wait()
 }

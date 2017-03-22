@@ -6,10 +6,13 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 	"time"
 )
 
 func main() {
+	// внутренее ограничение на количество горутины
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	// Создаем пару каналов
 	c1 := make(chan string)
 	c2 := make(chan string)
@@ -30,15 +33,17 @@ func main() {
 
 	go func() {
 		for {
-			select {
-			case msg1 := <-c1:
-				fmt.Println(msg1)
-			case msg2 := <-c2:
-				fmt.Println(msg2)
-			// time.After возвращает канал, в который запись произойдет через 1 секунду
-			case <-time.After(time.Second):
-				fmt.Println("timeout")
-			}
+			// select {
+			// case msg1 := <-c1:
+			// 	fmt.Println(msg1)
+			// case msg2 := <-c2:
+			// 	fmt.Println(msg2)
+			// // time.After возвращает канал, в который запись произойдет через 1 секунду
+			// case <-time.After(time.Second):
+			// 	fmt.Println("timeout")
+			// }
+			runtime.Gosched()
+			//в этот момент меня можо прервать и выполнить кого-то другого
 		}
 	}()
 

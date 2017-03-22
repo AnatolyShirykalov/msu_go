@@ -1,12 +1,12 @@
 package main
 
 import (
-	"net/http"
-	"github.com/gorilla/websocket"
-	"log"
-	"time"
-	"io/ioutil"
 	"encoding/json"
+	"github.com/gorilla/websocket"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
 )
 
 type Joke struct {
@@ -59,7 +59,7 @@ func (b *Bus) Run() {
 
 func NewBus() *Bus {
 	return &Bus{
-		register: make(chan *websocket.Conn),
+		register:  make(chan *websocket.Conn),
 		broadcast: make(chan []byte),
 		clients:   make(map[*websocket.Conn]bool),
 	}

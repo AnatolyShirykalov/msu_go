@@ -37,6 +37,7 @@ func (a *AccountProtected) Withdraw(amount float64) {
 	defer a.Unlock()
 	if amount > a.balance {
 		return
+
 	}
 	log.Printf("withdrawing: %f", amount)
 	a.balance -= amount
