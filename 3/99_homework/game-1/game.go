@@ -150,14 +150,14 @@ func (p *Player) HandleInput(command string) {
 		command: command,
 		player:  p,
 	}
-	fmt.Println(command, "sdfdgh")
+	fmt.Println(command, "[FROM HANDLE INPUT]")
 
 }
 
 func (g *Game) run() {
 	for cmd := range g.msgin {
 		cmd.player.don(cmd.command)
-		fmt.Println(cmd.command, cmd.player.Name, "Dzfxcb")
+		fmt.Println(cmd.command, cmd.player.Name, "[FROM RUN]")
 	}
 }
 

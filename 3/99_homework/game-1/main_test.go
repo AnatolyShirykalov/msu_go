@@ -68,11 +68,11 @@ func TestGame0(t *testing.T) {
 		}
 		pr("1")
 		go func() {
-			pr("rrr")
+			pr("go1")
 			output := players["Tristan"].GetOutput()
 			for lastOutput["Tristan"] = range output {
-				pr("adsfdf")
-				pr(lastOutput["Tristan"], "gggg")
+				pr("gfor1")
+				pr(lastOutput["Tristan"], "gfor2")
 			}
 		}()
 		pr("2")
@@ -86,8 +86,8 @@ func TestGame0(t *testing.T) {
 			pr("6")
 			runtime.Gosched()
 			pr("7") // дадим считать ответ
-			answer := lastOutput["Tristan"]
-			pr(answer, "8")
+			answer, ok := lastOutput["Tristan"]
+			pr(answer, ok, "8")
 			if answer != item.answer {
 				t.Error("case:", caseNum, item.step,
 					"\n\tcmd:", item.command,
