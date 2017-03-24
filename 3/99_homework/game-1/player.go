@@ -17,7 +17,6 @@ import (
 // }()
 
 func (p *Player) GetOutput() chan string {
-	fmt.Println("getout")
 	return p.msg
 }
 
