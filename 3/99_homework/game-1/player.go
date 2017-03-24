@@ -17,15 +17,55 @@ import (
 // }()
 
 func (p *Player) GetOutput() chan string {
-	// select {
-	// case <-p.msg:
+	fmt.Println("getout")
 	return p.msg
-	// }
-	// return
+}
+
+func (p *Player) don(command string) {
+	c := strings.Split(command, " ")
+	switch c[0] {
+	case "осмотреться":
+		fmt.Println("ghbj")
+		p.msg <- p.View()
+		return
+	case "идти":
+		fmt.Println(p.MoveTo(GetRoom(c[1])))
+		p.msg <- p.MoveTo(GetRoom(c[1]))
+		return
+	case "надеть":
+		if c[1] != "рюкзак" {
+			panic("Нельзя надеть " + c[1])
+		}
+		p.msg <- p.AddBack(c[1])
+		return
+	case "взять":
+		if c[1] == "рюкзак" {
+			panic("Нельзя взять " + c[1])
+		}
+		if p.RefBack == nil {
+			p.msg <- "некуда класть"
+		} else {
+			p.msg <- p.AddThing(c[1])
+
+		}
+		return
+	case "применить":
+		p.msg <- p.Apply(c[1], c[2])
+		return
+	case "сказать":
+		p.msg <- p.Say(c[1:])
+		return
+	case "сказать_игроку":
+		p.msg <- p.Tell(c[1:])
+		return
+	default:
+		p.msg <- "неизвестная команда"
+		return
+	}
 }
 
 // у каждого игрока есть метод, который запускает рутину и возращает канал в которой будет возвращать ответы
-func (p *Player) Say(command []string) string {
+func (p *Player) Say(comma []string) string {
 
 	return ""
 }

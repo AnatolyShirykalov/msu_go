@@ -1,8 +1,9 @@
 package game
 
-import (
-// "sync"
-)
+type Command struct {
+	player  *Player
+	command string
+}
 
 type ObjSubj struct {
 	Key      string
@@ -13,14 +14,16 @@ type ObjSubj struct {
 type Player struct {
 	InRoom  *Room
 	RefBack *Back
-	msg     chan string
 	Name    string
+	msg     chan string
 }
 type Back struct {
 	Things map[string]bool
 	Full   bool
 }
 type Game struct {
+	msgin chan *Command
+
 	Priory  []string
 	Rooms   map[string]*Room
 	Players map[string]*Player

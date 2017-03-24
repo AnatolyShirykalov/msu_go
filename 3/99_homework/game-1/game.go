@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"strings"
 )
 
 var G Game
@@ -52,6 +51,7 @@ func NewPlayer(name string) (player *Player) {
 			msg:  make(chan string),
 		},
 	}
+	// fmt.Println(G.Players[name].Name)
 	// G.Players[name] = &Player{
 	// 	Name: name,
 	// 	msg:  make(chan string),
@@ -68,7 +68,9 @@ func initGame() {
 		// Links:   make([]Link, 0, 20),
 		Players: make(map[string]*Player),
 		Aliases: make(map[string]string),
+		msgin:   make(chan *Command),
 	}
+
 	G.Rooms = map[string]*Room{
 		"кухня": {
 			Name: "кухня",
@@ -141,53 +143,21 @@ func initGame() {
 	G.Aliases = map[string]string{
 		"улица": "домой",
 	}
+	go G.run()
 }
-func (gamer *Player) HandleInput(command string) {
-	// gamer.msg := make(chan string)
-	c := strings.Split(command, " ")
-	switch c[0] {
-	case "осмотреться":
-		// fmt.Println("ghbj")
-		gamer.msg <- gamer.View()
-		return
-	case "идти":
-		gamer.msg <- gamer.MoveTo(GetRoom(c[1]))
-		return
-	case "надеть":
-		{
-			if c[1] != "рюкзак" {
-				panic("Нельзя надеть " + c[1])
-			}
-			gamer.msg <- gamer.AddBack(c[1])
-		}
-		return
-	case "взять":
-		{
-			if c[1] == "рюкзак" {
-				panic("Нельзя взять " + c[1])
-			}
-			if gamer.RefBack == nil {
-				gamer.msg <- "некуда класть"
-			} else {
-				gamer.msg <- gamer.AddThing(c[1])
+func (p *Player) HandleInput(command string) {
+	G.msgin <- &Command{
+		command: command,
+		player:  p,
+	}
+	fmt.Println(command, "sdfdgh")
 
-			}
-			return
-		}
-	case "применить":
-		{
-			gamer.msg <- gamer.Apply(c[1], c[2])
-			return
-		}
-	case "сказать":
-		gamer.msg <- gamer.Say(c[1:])
-		return
-	case "сказать_игроку":
-		gamer.msg <- gamer.Tell(c[1:])
-		return
-	default:
-		gamer.msg <- "неизвестная команда"
-		return
+}
+
+func (g *Game) run() {
+	for cmd := range g.msgin {
+		cmd.player.don(cmd.command)
+		fmt.Println(cmd.command, cmd.player.Name, "Dzfxcb")
 	}
 }
 

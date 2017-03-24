@@ -23,38 +23,28 @@ func (g *Game) GetRoom(name string) *Room {
 
 func handleCommand(command string) string {
 	gamer := &g.Players[0]
-	// gamer1 := &g.Players[1]
 	c := strings.Split(command, " ")
+
 	switch c[0] {
 	case "осмотреться":
 		return gamer.View()
 	case "идти":
 		return gamer.MoveTo(g.GetRoom(c[1]))
 	case "надеть":
-		{
-			if c[1] != "рюкзак" {
-				panic("Нельзя надеть " + c[1])
-			}
-			return gamer.AddBack(c[1])
+		if c[1] != "рюкзак" {
+			panic("Нельзя надеть " + c[1])
 		}
+		return gamer.AddBack(c[1])
 	case "взять":
-		{
-			if c[1] == "рюкзак" {
-				panic("Нельзя взять " + c[1])
-			}
-			if gamer.RefBack == nil {
-				return "некуда класть"
-			}
-			return gamer.AddThing(c[1])
+		if c[1] == "рюкзак" {
+			panic("Нельзя взять " + c[1])
 		}
+		if gamer.RefBack == nil {
+			return "некуда класть"
+		}
+		return gamer.AddThing(c[1])
 	case "применить":
-		{
-			return gamer.Apply(c[1], c[2])
-		}
-	// case "сказать":
-	// 	return gamer.Say(c[1:])
-	// case "сказать_игроку":
-	// 	return gamer.Tell(c[1])
+		return gamer.Apply(c[1], c[2])
 	default:
 		return "неизвестная команда"
 	}
@@ -62,8 +52,7 @@ func handleCommand(command string) string {
 
 func initGame() {
 	g = Game{
-		Rooms: make(map[string]*Room),
-		// Links:   make([]Link, 0, 20),
+		Rooms:   make(map[string]*Room),
 		Players: make([]Player, 0, 1),
 		Aliases: make(map[string]string),
 	}
@@ -149,12 +138,3 @@ func initGame() {
 		{InRoom: g.GetRoom("кухня")},
 	}
 }
-
-// func Run() {
-// 	initGame()
-// 	p := g.Players[0]
-// 	fmt.Println(p.InRoom.LinkedWith(g.GetRoom("коридор")))
-// 	fmt.Println(p.MoveTo(g.GetRoom("коридор")))
-// 	fmt.Println(p.MoveTo(g.GetRoom("улица")))
-// 	fmt.Println(p.MoveTo(g.GetRoom("домой")))
-// }
