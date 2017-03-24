@@ -65,18 +65,9 @@ func (a *AccountAsync) applyDelta(amount float64) error {
 // Бесконечный цикл обработчика счета
 // теперь сколько бы горутин не производили операции над этим аккаунтом
 // Все они будут синхронизированы здесь, и блокировки уже не нужны
-func (a *AccountAsync) run() {
-	var delta float64
-	for {
-		select {
-		// Если поступили изменения
-		case delta = <-a.deltaChan:
-			// Попробуем их применить
-			a.errChan <- a.applyDelta(delta)
-			// Если кто-то запрашивает баланс
-		case a.balanceChan <- a.balance:
-			// Не делаем ничего, тк мы уже отправили ответ
-		}
+func (g *Game) run() {
+	for cmd := range g.msgin {
+		cmd.player.do(cmd.command)
 	}
 }
 
