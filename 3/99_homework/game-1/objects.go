@@ -1,8 +1,6 @@
-package game
+package main
 
-import (
-	"sync"
-)
+import "sync"
 
 type Command struct {
 	player  *Player
@@ -20,7 +18,6 @@ type Player struct {
 	RefBack *Back
 	Name    string
 	msg     chan string
-	msgout  chan string
 }
 type Back struct {
 	Things map[string]bool
@@ -36,12 +33,13 @@ type Game struct {
 }
 
 type Room struct {
-	Name     string
-	Msg      map[string]*subjLock
-	Things   map[string]bool
-	Subjects map[string]ObjSubj
-	Act      string
-	LinkRoom map[string]string
+	Name       string
+	Msg        map[string]string
+	Things     map[string]bool
+	Subjects   map[string]ObjSubj
+	Act        string
+	LinkRoom   map[string]string
+	Decription func(r *Room, pl *Player) string
 }
 
 func (r *Room) Label() string {
@@ -50,9 +48,4 @@ func (r *Room) Label() string {
 
 func (r *Room) Type() string {
 	return "комнаты"
-}
-
-type subjLock struct {
-	sync.Mutex
-	lable string
 }

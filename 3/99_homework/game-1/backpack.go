@@ -1,4 +1,4 @@
-package game
+package main
 
 func (b *Back) Type() string {
 	return "рюкзак"

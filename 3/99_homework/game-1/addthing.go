@@ -1,4 +1,4 @@
-package game
+package main
 
 func (p *Player) AddThing(thi string) string {
 	room := p.InRoom
@@ -9,30 +9,33 @@ func (p *Player) AddThing(thi string) string {
 	return p.RefBack.Take(thi)
 }
 
-func (p *Player) AddBack(thi string) string {
+func (p *Player) AddBack(thi string) {
 	room := p.InRoom
 	if !room.Things[thi] {
-		return "нет такого"
+		p.msg <- "нет такого"
+	} else {
+		p.RefBack = &Back{
+			Things: map[string]bool{
+				"ключи":     false,
+				"конспекты": false,
+			},
+		}
+		room.Things[thi] = false
+		p.msg <- "вы надели: " + thi
 	}
-	p.RefBack = &Back{
-		Things: map[string]bool{
-			"ключи":     false,
-			"конспекты": false,
-		},
-	}
-	room.Things[thi] = false
-	return "вы надели: " + thi
+	G.wg.Done()
 }
 
-func (p *Player) Apply(thi string, subj string) string {
+func (p *Player) Apply(thi string, subj string) {
 	room := p.InRoom
 	//Appliabl
 	if p.RefBack.Apply(thi, subj) == "" {
 		if room.LinkRoom[room.Subjects[subj].NameRoom] == "lock" {
 			room.LinkRoom[room.Subjects[subj].NameRoom] = "exist"
 		}
-		return subj + " открыта"
+		p.msg <- subj + " открыта"
 	} else {
-		return p.RefBack.Apply(thi, subj)
+		p.msg <- p.RefBack.Apply(thi, subj)
 	}
+	G.wg.Done()
 }

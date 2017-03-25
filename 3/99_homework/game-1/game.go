@@ -1,8 +1,6 @@
-package game
+package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
 var G Game
 
@@ -27,17 +25,15 @@ func GetRoom(name string) *Room {
 func NewPlayer(name string) (player *Player) {
 	G.Players = map[string]*Player{
 		name: {
-			Name:   name,
-			msg:    make(chan string),
-			msgout: make(chan string, 1),
+			Name: name,
+			msg:  make(chan string),
 		},
 	}
 	return G.Players[name]
 }
 func initGame() {
 	G = Game{
-		Rooms: make(map[string]*Room),
-		// Links:   make([]Link, 0, 20),
+		Rooms:   make(map[string]*Room),
 		Players: make(map[string]*Player),
 		Aliases: make(map[string]string),
 		msgin:   make(chan *Command),
@@ -47,12 +43,12 @@ func initGame() {
 		"кухня": {
 			Name: "кухня",
 			Act:  "идти в универ. ",
-			Msg: map[string]*subjLock{
-				"notlinked":  {lable: "нет пути кухня"},
-				"enter":      {lable: "кухня, ничего интересного."},
-				"lookaround": {lable: "ты находишься на кухне, на столе "},
-				"backact":    {lable: "надо собрать "},
-				"end":        {lable: "можно пройти - коридор"},
+			Msg: map[string]string{
+				"notlinked":  "нет пути кухня",
+				"enter":      "кухня, ничего интересного.",
+				"lookaround": "ты находишься на кухне, на столе ",
+				"backact":    "надо собрать ",
+				"end":        "можно пройти - коридор",
 			}, Things: map[string]bool{
 				"чай": true,
 			}, Subjects: map[string]ObjSubj{
@@ -62,10 +58,10 @@ func initGame() {
 		},
 		"коридор": {
 			Name: "коридор",
-			Msg: map[string]*subjLock{
-				"notlinked": {lable: "нет пути коридор"},
-				"enter":     {lable: "ничего интересного."},
-				"lookaround": {lable: "	Ты нахдишься в коридоре, тут страшно"},
+			Msg: map[string]string{
+				"notlinked": "нет пути коридор",
+				"enter":     "ничего интересного.",
+				"lookaround": "	Ты нахдишься в коридоре, тут страшно",
 			}, Things: map[string]bool{
 				"ничего": true,
 			}, Subjects: map[string]ObjSubj{
@@ -78,12 +74,12 @@ func initGame() {
 		},
 		"комната": {
 			Name: "комната",
-			Msg: map[string]*subjLock{
-				"notlinked":  {lable: "нет пути в комната"},
-				"enter":      {lable: "ты в своей комнате."},
-				"lookaround": {lable: "на столе: "},
-				"backact":    {lable: "на стуле - "},
-				"end":        {lable: "можно пройти - коридор"},
+			Msg: map[string]string{
+				"notlinked":  "нет пути в комната",
+				"enter":      "ты в своей комнате.",
+				"lookaround": "на столе: ",
+				"backact":    "на стуле - ",
+				"end":        "можно пройти - коридор",
 			}, Things: map[string]bool{
 				"ключи":     true,
 				"конспекты": true,
@@ -95,11 +91,11 @@ func initGame() {
 		},
 		"улица": {
 			Name: "улица",
-			Msg: map[string]*subjLock{
-				"notlinked":  {lable: "нет пути улица"},
-				"enter":      {lable: "на улице весна."},
-				"lookaround": {lable: "ты находишься на улице, как же прекрасен свежый воздух"},
-				"locked":     {lable: "дверь закрыта"},
+			Msg: map[string]string{
+				"notlinked":  "нет пути улица",
+				"enter":      "на улице весна.",
+				"lookaround": "ты находишься на улице, как же прекрасен свежый воздух",
+				"locked":     "дверь закрыта",
 			}, Subjects: map[string]ObjSubj{
 				"шкаф": {Exist: true, Lock: true, Key: "кот"},
 			}, LinkRoom: map[string]string{
