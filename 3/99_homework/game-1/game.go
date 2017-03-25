@@ -36,8 +36,7 @@ func initGame() {
 		Rooms:   make(map[string]*Room),
 		Players: make(map[string]*Player),
 		Aliases: make(map[string]string),
-		msgin:   make(chan *Command),
-	}
+		msgin:   make(chan *Command)}
 
 	G.Rooms = map[string]*Room{
 		"кухня": {

@@ -37,10 +37,10 @@ func (p *Player) don(command string) {
 		}
 		if p.RefBack == nil {
 			p.msg <- "некуда класть"
+			G.wg.Done()
 		} else {
-			p.msg <- p.AddThing(c[1])
+			p.AddThing(c[1])
 		}
-		G.wg.Done()
 	case "применить":
 		p.Apply(c[1], c[2])
 	case "сказать":
@@ -83,6 +83,7 @@ func (p *Player) Tell(command []string) {
 	}
 	G.Players[command[0]].msg <- p.Name + " говорит вам: " + strings.Join(command[1:], " ")
 	G.wg.Done()
+	return
 }
 
 func (rfro *Room) Passability(rto *Room) string {

@@ -1,12 +1,14 @@
 package main
 
-func (p *Player) AddThing(thi string) string {
+func (p *Player) AddThing(thi string) {
 	room := p.InRoom
 	if !room.Things[thi] {
-		return "нет такого"
+		p.msg <- "нет такого"
+	} else {
+		room.Things[thi] = false
+		p.msg <- p.RefBack.Take(thi)
 	}
-	room.Things[thi] = false
-	return p.RefBack.Take(thi)
+	G.wg.Done()
 }
 
 func (p *Player) AddBack(thi string) {
