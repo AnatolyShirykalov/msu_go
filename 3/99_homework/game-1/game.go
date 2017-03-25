@@ -26,7 +26,9 @@ func NewPlayer(name string) (player *Player) {
 	G.Players = map[string]*Player{
 		name: {
 			Name: name,
-			msg:  make(chan string),
+			msg: &Chan{
+				msg: make(chan string),
+			},
 		},
 	}
 	return G.Players[name]
@@ -39,27 +41,11 @@ func initGame() {
 		msgin:   make(chan *Command)}
 
 	G.Rooms = map[string]*Room{
-		"кухня": {
-			Name: "кухня",
-			Act:  "идти в универ. ",
-			Msg: map[string]string{
-				"notlinked":  "нет пути кухня",
-				"enter":      "кухня, ничего интересного.",
-				"lookaround": "ты находишься на кухне, на столе ",
-				"backact":    "надо собрать ",
-				"end":        "можно пройти - коридор",
-			}, Things: map[string]bool{
-				"чай": true,
-			}, Subjects: map[string]ObjSubj{
-				"ничего": {Exist: true, Lock: true},
-			}, LinkRoom: map[string]string{
-				"коридор": "exist"},
-		},
+		"кухня": InitRoom("кухня"),
 		"коридор": {
 			Name: "коридор",
 			Msg: map[string]string{
-				"notlinked": "нет пути коридор",
-				"enter":     "ничего интересного.",
+				"enter": "ничего интересного.",
 				"lookaround": "	Ты нахдишься в коридоре, тут страшно",
 			}, Things: map[string]bool{
 				"ничего": true,
@@ -74,7 +60,6 @@ func initGame() {
 		"комната": {
 			Name: "комната",
 			Msg: map[string]string{
-				"notlinked":  "нет пути в комната",
 				"enter":      "ты в своей комнате.",
 				"lookaround": "на столе: ",
 				"backact":    "на стуле - ",
@@ -91,7 +76,6 @@ func initGame() {
 		"улица": {
 			Name: "улица",
 			Msg: map[string]string{
-				"notlinked":  "нет пути улица",
 				"enter":      "на улице весна.",
 				"lookaround": "ты находишься на улице, как же прекрасен свежый воздух",
 				"locked":     "дверь закрыта",

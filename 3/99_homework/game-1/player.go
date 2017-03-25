@@ -7,6 +7,7 @@ import (
 )
 
 func (p *Player) HandleInput(command string) {
+	// fmt.Println("handl")
 	G.wg.Add(2)
 	G.msgin <- &Command{
 		command: command,
@@ -16,10 +17,11 @@ func (p *Player) HandleInput(command string) {
 }
 
 func (p *Player) GetOutput() chan string {
-	return p.msg
+	return p.msg.msg
 }
 
 func (p *Player) don(command string) {
+	p.msg.Lock()
 	c := strings.Split(command, " ")
 	switch c[0] {
 	case "осмотреться":
@@ -36,7 +38,7 @@ func (p *Player) don(command string) {
 			panic("Нельзя взять " + c[1])
 		}
 		if p.RefBack == nil {
-			p.msg <- "некуда класть"
+			p.msg.msg <- "некуда класть"
 			G.wg.Done()
 		} else {
 			p.AddThing(c[1])
@@ -48,17 +50,18 @@ func (p *Player) don(command string) {
 	case "сказать_игроку":
 		p.Tell(c[1:])
 	default:
-		p.msg <- "неизвестная команда"
+		p.msg.msg <- "неизвестная команда"
 		G.wg.Done()
 	}
+	defer p.msg.Unlock()
 }
 
 // у каждого игрока есть метод, который запускает рутину и возращает канал в которой будет возвращать ответы
 func (p *Player) Say(command []string) {
 	for name, p2 := range G.Players {
 		if p.InRoom.Name == p2.InRoom.Name && name != p.Name {
-			p2.msg <- p.Name + " говорит: " + strings.Join(command, " ")
-			p.msg <- p.Name + " говорит: " + strings.Join(command, " ")
+			p2.msg.msg <- p.Name + " говорит: " + strings.Join(command, " ")
+			p.msg.msg <- p.Name + " говорит: " + strings.Join(command, " ")
 			G.wg.Done()
 		}
 	}
@@ -67,21 +70,21 @@ func (p *Player) Say(command []string) {
 
 func (p *Player) Tell(command []string) {
 	if G.Players[command[0]] == nil {
-		p.msg <- "тут нет такого игрока"
+		p.msg.msg <- "тут нет такого игрока"
 		G.wg.Done()
 		return
 	}
 	if len(command) == 1 {
 		if p.InRoom.Name == G.Players[command[0]].InRoom.Name {
-			G.Players[command[0]].msg <- p.Name + " выразительно молчит, смотря на вас"
+			G.Players[command[0]].msg.msg <- p.Name + " выразительно молчит, смотря на вас"
 			G.wg.Done()
 			return
 		}
-		p.msg <- "тут нет такого игрока"
+		p.msg.msg <- "тут нет такого игрока"
 		G.wg.Done()
 		return
 	}
-	G.Players[command[0]].msg <- p.Name + " говорит вам: " + strings.Join(command[1:], " ")
+	G.Players[command[0]].msg.msg <- p.Name + " говорит вам: " + strings.Join(command[1:], " ")
 	G.wg.Done()
 	return
 }
@@ -89,7 +92,11 @@ func (p *Player) Tell(command []string) {
 func (rfro *Room) Passability(rto *Room) string {
 	Flag, ok := rfro.LinkRoom[rto.Name]
 	if !ok {
-		return rto.Msg["notlinked"]
+		notlinked := "нет пути "
+		if rto.Name == "комната" {
+			notlinked += "в "
+		}
+		return notlinked + rto.Name
 	}
 	if Flag == "lock" {
 		return rto.Msg["locked"]
@@ -99,7 +106,7 @@ func (rfro *Room) Passability(rto *Room) string {
 
 func (p *Player) MoveTo(r *Room) {
 	if p.InRoom.Passability(r) != "" {
-		p.msg <- p.InRoom.Passability(r)
+		p.msg.msg <- p.InRoom.Passability(r)
 	} else {
 		p.InRoom = r
 		msg := r.Msg["enter"]
@@ -127,7 +134,7 @@ func (p *Player) MoveTo(r *Room) {
 			msg = fmt.Sprintf("%s%s", msg, name)
 			flag += 1
 		}
-		p.msg <- msg
+		p.msg.msg <- msg
 	}
 	G.wg.Done()
 }
@@ -189,6 +196,6 @@ func (p *Player) View() {
 		}
 
 	}
-	p.msg <- msg
+	p.msg.msg <- msg
 	G.wg.Done()
 }

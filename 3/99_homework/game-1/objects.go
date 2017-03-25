@@ -17,7 +17,7 @@ type Player struct {
 	InRoom  *Room
 	RefBack *Back
 	Name    string
-	msg     chan string
+	msg     *Chan
 }
 type Back struct {
 	Things map[string]bool
@@ -40,6 +40,11 @@ type Room struct {
 	Act        string
 	LinkRoom   map[string]string
 	Decription func(r *Room, pl *Player) string
+}
+
+type Chan struct {
+	sync.Mutex
+	msg chan string
 }
 
 func (r *Room) Label() string {

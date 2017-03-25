@@ -3,10 +3,10 @@ package main
 func (p *Player) AddThing(thi string) {
 	room := p.InRoom
 	if !room.Things[thi] {
-		p.msg <- "нет такого"
+		p.msg.msg <- "нет такого"
 	} else {
 		room.Things[thi] = false
-		p.msg <- p.RefBack.Take(thi)
+		p.msg.msg <- p.RefBack.Take(thi)
 	}
 	G.wg.Done()
 }
@@ -14,7 +14,7 @@ func (p *Player) AddThing(thi string) {
 func (p *Player) AddBack(thi string) {
 	room := p.InRoom
 	if !room.Things[thi] {
-		p.msg <- "нет такого"
+		p.msg.msg <- "нет такого"
 	} else {
 		p.RefBack = &Back{
 			Things: map[string]bool{
@@ -23,7 +23,7 @@ func (p *Player) AddBack(thi string) {
 			},
 		}
 		room.Things[thi] = false
-		p.msg <- "вы надели: " + thi
+		p.msg.msg <- "вы надели: " + thi
 	}
 	G.wg.Done()
 }
@@ -35,9 +35,9 @@ func (p *Player) Apply(thi string, subj string) {
 		if room.LinkRoom[room.Subjects[subj].NameRoom] == "lock" {
 			room.LinkRoom[room.Subjects[subj].NameRoom] = "exist"
 		}
-		p.msg <- subj + " открыта"
+		p.msg.msg <- subj + " открыта"
 	} else {
-		p.msg <- p.RefBack.Apply(thi, subj)
+		p.msg.msg <- p.RefBack.Apply(thi, subj)
 	}
 	G.wg.Done()
 }
