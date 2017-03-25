@@ -1,5 +1,9 @@
 package game
 
+import (
+	"sync"
+)
+
 type Command struct {
 	player  *Player
 	command string
@@ -16,14 +20,15 @@ type Player struct {
 	RefBack *Back
 	Name    string
 	msg     chan string
+	msgout  chan string
 }
 type Back struct {
 	Things map[string]bool
 	Full   bool
 }
 type Game struct {
-	msgin chan *Command
-
+	msgin   chan *Command
+	wg      sync.WaitGroup
 	Priory  []string
 	Rooms   map[string]*Room
 	Players map[string]*Player
@@ -32,7 +37,7 @@ type Game struct {
 
 type Room struct {
 	Name     string
-	Msg      map[string]string
+	Msg      map[string]*subjLock
 	Things   map[string]bool
 	Subjects map[string]ObjSubj
 	Act      string
@@ -45,4 +50,9 @@ func (r *Room) Label() string {
 
 func (r *Room) Type() string {
 	return "комнаты"
+}
+
+type subjLock struct {
+	sync.Mutex
+	lable string
 }

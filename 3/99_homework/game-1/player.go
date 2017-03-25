@@ -6,37 +6,42 @@ import (
 	"strings"
 )
 
-// players := map[string]*Player{
-// 	"Tristan": NewPlayer("Tristan"),
-// 	"Izolda":  NewPlayer("Izolda"),
-// }
-// go func() {
-// 	output := players["Tristan"].GetOutput()
-// 	for lastOutput["Tristan"] = range output {
-// 	}
-// }()
+func (p *Player) HandleInput(command string) {
+	G.wg.Add(2)
+	G.msgin <- &Command{
+		command: command,
+		player:  p,
+	}
+	G.wg.Wait()
+}
 
 func (p *Player) GetOutput() chan string {
-	return p.msg
+	func() {
+		for {
+			select {
+			case msg := <-p.msg:
+				p.msgout <- msg
+			}
+		}
+	}()
+	return p.msgout
 }
 
 func (p *Player) don(command string) {
 	c := strings.Split(command, " ")
 	switch c[0] {
 	case "осмотреться":
-		fmt.Println("ghbj")
 		p.msg <- p.View()
-		return
+		G.wg.Done()
 	case "идти":
-		fmt.Println(p.MoveTo(GetRoom(c[1])))
 		p.msg <- p.MoveTo(GetRoom(c[1]))
-		return
+		G.wg.Done()
 	case "надеть":
 		if c[1] != "рюкзак" {
 			panic("Нельзя надеть " + c[1])
 		}
 		p.msg <- p.AddBack(c[1])
-		return
+		G.wg.Done()
 	case "взять":
 		if c[1] == "рюкзак" {
 			panic("Нельзя взять " + c[1])
@@ -47,36 +52,45 @@ func (p *Player) don(command string) {
 			p.msg <- p.AddThing(c[1])
 
 		}
-		return
+		G.wg.Done()
+
 	case "применить":
 		p.msg <- p.Apply(c[1], c[2])
-		return
+		G.wg.Done()
 	case "сказать":
 		p.msg <- p.Say(c[1:])
-		return
+		G.wg.Done()
 	case "сказать_игроку":
 		p.msg <- p.Tell(c[1:])
-		return
+		G.wg.Done()
 	default:
 		p.msg <- "неизвестная команда"
-		return
+		G.wg.Done()
 	}
 }
 
 // у каждого игрока есть метод, который запускает рутину и возращает канал в которой будет возвращать ответы
-func (p *Player) Say(comma []string) string {
-
-	return ""
+func (p *Player) Say(command []string) string {
+	msg := p.Name + " говорит: " + strings.Join(command, " ") + " "
+	for name, p2 := range G.Players {
+		if p.InRoom.Name == p2.InRoom.Name && name != p.Name {
+			msg += name + " говорит: " + strings.Join(command, " ")
+		}
+	}
+	return msg
 }
 
 func (p *Player) Tell(command []string) string {
-
 	if G.Players[command[0]] == nil {
 		return "тут нет такого игрока"
 	}
 
 	if len(command) == 1 {
-		return p.Name + " выразительно молчит, смотря на вас"
+		fmt.Println(command[0])
+		if p.InRoom.Name == G.Players[command[0]].InRoom.Name {
+			return p.Name + " выразительно молчит, смотря на вас"
+		}
+		return "тут нет такого игрока"
 	}
 
 	return p.Name + "говорит вам: " + strings.Join(command, " ")
@@ -85,22 +99,10 @@ func (p *Player) Tell(command []string) string {
 func (rfro *Room) Passability(rto *Room) string {
 	Flag, ok := rfro.LinkRoom[rto.Name]
 	if !ok {
-		msg, ok := rto.Msg["notlinked"]
-		if !ok {
-			panic(HaveNotMsg(rfro, "notlinked"))
-		} else {
-			return msg
-		}
+		return rto.Msg["notlinked"].lable
 	}
 	if Flag == "lock" {
-		if msg, ok := rto.Msg["locked"]; !ok {
-			panic(HaveNotMsg(rto, "locked"))
-		} else {
-			return msg
-		}
-	}
-	if _, ok := rto.Msg["enter"]; !ok {
-		panic(HaveNotMsg(rto, "enter"))
+		return rto.Msg["locked"].lable
 	}
 	return ""
 }
@@ -109,7 +111,7 @@ func (p *Player) MoveTo(r *Room) string {
 	passability := p.InRoom.Passability(r)
 	if passability == "" {
 		p.InRoom = r
-		msg := r.Msg["enter"]
+		msg := r.Msg["enter"].lable
 		var keys []string
 		for k, value := range r.LinkRoom {
 			if value != "" {
@@ -153,7 +155,7 @@ func (p *Player) View() string {
 	for _, k := range keys {
 		value := p.InRoom.Things[k]
 		if flag == 0 {
-			msg += p.InRoom.Msg["lookaround"]
+			msg += p.InRoom.Msg["lookaround"].lable
 			flag = 1
 		}
 		if value {
@@ -176,19 +178,17 @@ func (p *Player) View() string {
 		}
 	}
 	if p.RefBack == nil {
+		msg += p.InRoom.Msg["backact"].lable + p.RefBack.Type()
 		if p.InRoom.Act == "" {
-
-			msg += p.InRoom.Msg["backact"] + p.RefBack.Type() + ". "
+			msg += ". "
 		} else {
-			msg += p.InRoom.Msg["backact"] + p.RefBack.Type() + " и " + p.InRoom.Act
+			msg += " и " + p.InRoom.Act
 		}
 	}
 	if flag == 0 {
 		msg = "пустая комната. "
 	}
-	msg += p.InRoom.Msg["end"]
-	// if len(G.Players) > 1 {
-	// fmt.Println("dd")
+	msg += p.InRoom.Msg["end"].lable
 
 	for name, exist := range G.Players {
 		if exist != nil {
@@ -199,7 +199,5 @@ func (p *Player) View() string {
 		}
 
 	}
-	// fmt.Println(msg)
-	// }
 	return msg
 }
