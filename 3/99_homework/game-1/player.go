@@ -1,129 +1,129 @@
-package game
+package main
 
 import (
 	"fmt"
 	"sort"
 	"strings"
+	// "time"
 )
 
-// players := map[string]*Player{
-// 	"Tristan": NewPlayer("Tristan"),
-// 	"Izolda":  NewPlayer("Izolda"),
-// }
-// go func() {
-// 	output := players["Tristan"].GetOutput()
-// 	for lastOutput["Tristan"] = range output {
-// 	}
-// }()
+func (p *Player) HandleInput(command string) {
+	// fmt.Println("handl")
+	G.wg.Add(2)
+	G.msgin <- &Command{
+		command: command,
+		player:  p,
+	}
+	// time.Sleep(time.Millisecond)
+	G.wg.Wait()
+}
 
 func (p *Player) GetOutput() chan string {
-	fmt.Println("getout")
-	return p.msg
+	return p.Msg.ChanMsg
 }
 
 func (p *Player) don(command string) {
+	p.Msg.Lock()
 	c := strings.Split(command, " ")
 	switch c[0] {
 	case "осмотреться":
-		fmt.Println("ghbj")
-		p.msg <- p.View()
-		return
+		p.View()
 	case "идти":
-		fmt.Println(p.MoveTo(GetRoom(c[1])))
-		p.msg <- p.MoveTo(GetRoom(c[1]))
-		return
+		p.MoveTo(GetRoom(c[1]))
 	case "надеть":
 		if c[1] != "рюкзак" {
 			panic("Нельзя надеть " + c[1])
 		}
-		p.msg <- p.AddBack(c[1])
-		return
+		p.AddBack(c[1])
 	case "взять":
 		if c[1] == "рюкзак" {
 			panic("Нельзя взять " + c[1])
 		}
 		if p.RefBack == nil {
-			p.msg <- "некуда класть"
+			p.Msg.ChanMsg <- "некуда класть"
+			G.wg.Done()
 		} else {
-			p.msg <- p.AddThing(c[1])
-
+			p.AddThing(c[1])
 		}
-		return
 	case "применить":
-		p.msg <- p.Apply(c[1], c[2])
-		return
+		p.Apply(c[1], c[2])
 	case "сказать":
-		p.msg <- p.Say(c[1:])
-		return
+		p.Say(c[1:])
 	case "сказать_игроку":
-		p.msg <- p.Tell(c[1:])
-		return
+		p.Tell(c[1:])
 	default:
-		p.msg <- "неизвестная команда"
-		return
+		p.Msg.ChanMsg <- "неизвестная команда"
+		G.wg.Done()
 	}
+	defer p.Msg.Unlock()
 }
 
 // у каждого игрока есть метод, который запускает рутину и возращает канал в которой будет возвращать ответы
-func (p *Player) Say(comma []string) string {
-
-	return ""
+func (p *Player) Say(command []string) {
+	for name, p2 := range G.Players {
+		if p.InRoom.Name == p2.InRoom.Name && name != p.Name {
+			p2.Msg.ChanMsg <- p.Name + " говорит: " + strings.Join(command, " ")
+			p.Msg.ChanMsg <- p.Name + " говорит: " + strings.Join(command, " ")
+			G.wg.Done()
+		}
+	}
+	return
 }
 
-func (p *Player) Tell(command []string) string {
-
+func (p *Player) Tell(command []string) {
 	if G.Players[command[0]] == nil {
-		return "тут нет такого игрока"
+		p.Msg.ChanMsg <- "тут нет такого игрока"
+		G.wg.Done()
+		return
 	}
-
 	if len(command) == 1 {
-		return p.Name + " выразительно молчит, смотря на вас"
+		if p.InRoom.Name == G.Players[command[0]].InRoom.Name {
+			G.Players[command[0]].Msg.ChanMsg <- p.Name + " выразительно молчит, смотря на вас"
+			G.wg.Done()
+			return
+		}
+		p.Msg.ChanMsg <- "тут нет такого игрока"
+		G.wg.Done()
+		return
 	}
-
-	return p.Name + "говорит вам: " + strings.Join(command, " ")
+	G.Players[command[0]].Msg.ChanMsg <- p.Name + " говорит вам: " + strings.Join(command[1:], " ")
+	G.wg.Done()
+	return
 }
 
 func (rfro *Room) Passability(rto *Room) string {
 	Flag, ok := rfro.LinkRoom[rto.Name]
 	if !ok {
-		msg, ok := rto.Msg["notlinked"]
-		if !ok {
-			panic(HaveNotMsg(rfro, "notlinked"))
-		} else {
-			return msg
+		notlinked := "нет пути "
+		if rto.Name == "комната" {
+			notlinked += "в "
 		}
+		return notlinked + rto.Name
 	}
 	if Flag == "lock" {
-		if msg, ok := rto.Msg["locked"]; !ok {
-			panic(HaveNotMsg(rto, "locked"))
-		} else {
-			return msg
-		}
-	}
-	if _, ok := rto.Msg["enter"]; !ok {
-		panic(HaveNotMsg(rto, "enter"))
+		return rto.Msg["locked"]
 	}
 	return ""
 }
 
-func (p *Player) MoveTo(r *Room) string {
-	passability := p.InRoom.Passability(r)
-	if passability == "" {
+func (p *Player) MoveTo(r *Room) {
+	if p.InRoom.Passability(r) != "" {
+		p.Msg.ChanMsg <- p.InRoom.Passability(r)
+	} else {
 		p.InRoom = r
 		msg := r.Msg["enter"]
-		var keys []string
-		for k, value := range r.LinkRoom {
-			if value != "" {
-				keys = append(keys, k)
+		var rooms []string
+		for roomin, roomout := range r.LinkRoom {
+			if roomout != "" {
+				rooms = append(rooms, roomin)
 			}
 		}
-		sort.Strings(keys)
-		if len(keys) == len(G.Priory) {
-			keys = G.Priory
+		sort.Strings(rooms)
+		if len(rooms) == len(G.Priory) {
+			rooms = G.Priory
 		}
-		flag := 0
-		for _, link := range keys {
-			if flag == 0 {
+		for i, link := range rooms {
+			if i == 0 {
 				msg = fmt.Sprintf("%s можно пройти - ", msg)
 			} else {
 				msg = fmt.Sprintf("%s, ", msg)
@@ -133,74 +133,60 @@ func (p *Player) MoveTo(r *Room) string {
 				name = Aliase
 			}
 			msg = fmt.Sprintf("%s%s", msg, name)
-			flag += 1
 		}
-		return msg
-	} else {
-		return passability
+		p.Msg.ChanMsg <- msg
 	}
+	G.wg.Done()
 }
 
-func (p *Player) View() string {
+func (p *Player) View() {
 	msg := ""
-	var keys []string
-	for k, value := range p.InRoom.Things {
-		if value && k != p.RefBack.Type() {
-			keys = append(keys, k)
+	var things []string
+	for thing, exist := range p.InRoom.Things {
+		if exist && thing != p.RefBack.Type() {
+			things = append(things, thing)
 		}
 	}
-	sort.Strings(keys)
-	flag := 0
-	for _, k := range keys {
-		value := p.InRoom.Things[k]
-		if flag == 0 {
+	sort.Strings(things)
+	for i, thing := range things {
+		if i == 0 {
 			msg += p.InRoom.Msg["lookaround"]
-			flag = 1
 		}
-		if value {
-			if flag < len(keys) {
-				msg += k + ", "
-				flag += 1
+		if i < len(things)-1 {
+			msg += fmt.Sprintf("%s, ", thing)
+			continue
+		}
+		if p.RefBack == nil {
+			msg += fmt.Sprintf("%s, ", thing)
+		} else {
+			if p.InRoom.Act == "" {
+				msg += fmt.Sprintf("%s. ", thing)
 			} else {
-				if p.RefBack == nil {
-					msg += k + ", "
-					flag += 1
-				} else {
-					if p.InRoom.Act == "" {
-						msg += k + ". "
-					} else {
-						msg += k + ", надо " + p.InRoom.Act
-
-					}
-				}
+				msg += fmt.Sprintf("%s, надо %s", thing, p.InRoom.Act)
 			}
 		}
 	}
 	if p.RefBack == nil {
+		msg += p.InRoom.Msg["backact"] + p.RefBack.Type()
 		if p.InRoom.Act == "" {
-
-			msg += p.InRoom.Msg["backact"] + p.RefBack.Type() + ". "
+			msg += ". "
 		} else {
-			msg += p.InRoom.Msg["backact"] + p.RefBack.Type() + " и " + p.InRoom.Act
+			msg += fmt.Sprintf(" и %s", p.InRoom.Act)
 		}
 	}
-	if flag == 0 {
+	if len(things) == 0 {
 		msg = "пустая комната. "
 	}
 	msg += p.InRoom.Msg["end"]
-	// if len(G.Players) > 1 {
-	// fmt.Println("dd")
 
 	for name, exist := range G.Players {
 		if exist != nil {
 			if name != p.Name {
-				msg += ". Кроме вас тут ещё " + name
+				msg += fmt.Sprintf(". Кроме вас тут ещё %s", name)
 				break
 			}
 		}
-
 	}
-	// fmt.Println(msg)
-	// }
-	return msg
+	p.Msg.ChanMsg <- msg
+	G.wg.Done()
 }

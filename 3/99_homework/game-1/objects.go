@@ -1,4 +1,6 @@
-package game
+package main
+
+import "sync"
 
 type Command struct {
 	player  *Player
@@ -15,15 +17,15 @@ type Player struct {
 	InRoom  *Room
 	RefBack *Back
 	Name    string
-	msg     chan string
+	Msg     *Chan
 }
 type Back struct {
 	Things map[string]bool
 	Full   bool
 }
 type Game struct {
-	msgin chan *Command
-
+	msgin   chan *Command
+	wg      sync.WaitGroup
 	Priory  []string
 	Rooms   map[string]*Room
 	Players map[string]*Player
@@ -31,12 +33,18 @@ type Game struct {
 }
 
 type Room struct {
-	Name     string
-	Msg      map[string]string
-	Things   map[string]bool
-	Subjects map[string]ObjSubj
-	Act      string
-	LinkRoom map[string]string
+	Name       string
+	Msg        map[string]string
+	Things     map[string]bool
+	Subjects   map[string]ObjSubj
+	Act        string
+	LinkRoom   map[string]string
+	Decription func(r *Room, pl *Player) string
+}
+
+type Chan struct {
+	sync.Mutex
+	ChanMsg chan string
 }
 
 func (r *Room) Label() string {

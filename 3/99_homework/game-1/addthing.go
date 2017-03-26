@@ -1,38 +1,45 @@
-package game
+package main
 
-func (p *Player) AddThing(thi string) string {
+import "fmt"
+
+func (p *Player) AddThing(thi string) {
 	room := p.InRoom
 	if !room.Things[thi] {
-		return "нет такого"
+		p.Msg.ChanMsg <- "нет такого"
+	} else {
+		room.Things[thi] = false
+		p.Msg.ChanMsg <- p.RefBack.Take(thi)
 	}
-	room.Things[thi] = false
-	return p.RefBack.Take(thi)
+	G.wg.Done()
 }
 
-func (p *Player) AddBack(thi string) string {
+func (p *Player) AddBack(thi string) {
 	room := p.InRoom
 	if !room.Things[thi] {
-		return "нет такого"
+		p.Msg.ChanMsg <- "нет такого"
+	} else {
+		p.RefBack = &Back{
+			Things: map[string]bool{
+				"ключи":     false,
+				"конспекты": false,
+			},
+		}
+		room.Things[thi] = false
+		p.Msg.ChanMsg <- fmt.Sprintf("вы надели: %s", thi)
 	}
-	p.RefBack = &Back{
-		Things: map[string]bool{
-			"ключи":     false,
-			"конспекты": false,
-		},
-	}
-	room.Things[thi] = false
-	return "вы надели: " + thi
+	G.wg.Done()
 }
 
-func (p *Player) Apply(thi string, subj string) string {
+func (p *Player) Apply(thi string, subj string) {
 	room := p.InRoom
 	//Appliabl
 	if p.RefBack.Apply(thi, subj) == "" {
 		if room.LinkRoom[room.Subjects[subj].NameRoom] == "lock" {
 			room.LinkRoom[room.Subjects[subj].NameRoom] = "exist"
 		}
-		return subj + " открыта"
+		p.Msg.ChanMsg <- fmt.Sprintf("%s открыта", subj)
 	} else {
-		return p.RefBack.Apply(thi, subj)
+		p.Msg.ChanMsg <- p.RefBack.Apply(thi, subj)
 	}
+	G.wg.Done()
 }
