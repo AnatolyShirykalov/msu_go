@@ -3,7 +3,9 @@ package main
 import (
 	"reflect"
 	"runtime"
+	"sync"
 	"testing"
+	"time"
 )
 
 // --------------------------------------------------------------
@@ -69,9 +71,14 @@ func TestGame0(t *testing.T) {
 			"Tristan": NewPlayer("Tristan"),
 		}
 
+		mu := &sync.Mutex{}
+
 		go func() {
 			output := players["Tristan"].GetOutput()
-			for lastOutput["Tristan"] = range output {
+			for msg := range output {
+				mu.Lock()
+				lastOutput["Tristan"] = msg
+				mu.Unlock()
 			}
 		}()
 
@@ -80,8 +87,11 @@ func TestGame0(t *testing.T) {
 
 		for _, item := range commands {
 			players["Tristan"].HandleInput(item.command)
+			time.Sleep(time.Microsecond)
 			runtime.Gosched() // дадим считать ответ
+			mu.Lock()
 			answer := lastOutput["Tristan"]
+			mu.Unlock()
 			if answer != item.answer {
 				t.Error("case:", caseNum, item.step,
 					"\n\tcmd:", item.command,
@@ -105,66 +115,65 @@ type game1Case struct {
 }
 
 var game1Cases = [][]game1Case{
-
-// {
-// 	{
-// 		1,
-// 		"Tristan",
-// 		"осмотреться",
-// 		map[string]string{
-// 			"Tristan": "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор. Кроме вас тут ещё Izolda",
-// 		},
-// 	}, // действие осмотреться
-// 	{
-// 		2,
-// 		"Izolda",
-// 		"осмотреться",
-// 		map[string]string{
-// 			"Izolda": "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор. Кроме вас тут ещё Tristan",
-// 		},
-// 	}, // действие осмотреться
-// 	{
-// 		3,
-// 		"Izolda",
-// 		"сказать Пора топать в универ",
-// 		map[string]string{
-// 			"Tristan": "Izolda говорит: Пора топать в универ",
-// 			"Izolda":  "Izolda говорит: Пора топать в универ",
-// 		},
-// 	}, // действие сказать
-// 	{
-// 		4,
-// 		"Tristan",
-// 		"сказать_игроку Izolda Может ещё по чаю лучше?",
-// 		map[string]string{
-// 			"Izolda": "Tristan говорит вам: Может ещё по чаю лучше?",
-// 		},
-// 	}, // действие сказать_игроку
-// 	{
-// 		5,
-// 		"Izolda",
-// 		"сказать_игроку Tristan",
-// 		map[string]string{
-// 			"Tristan": "Izolda выразительно молчит, смотря на вас",
-// 		},
-// 	}, // действие сказать_игроку
-// 	{
-// 		6,
-// 		"Tristan",
-// 		"идти коридор",
-// 		map[string]string{
-// 			"Tristan": "ничего интересного. можно пройти - кухня, комната, улица",
-// 		},
-// 	}, // действие идти
-// 	{
-// 		7,
-// 		"Izolda",
-// 		"сказать_игроку Tristan",
-// 		map[string]string{
-// 			"Izolda": "тут нет такого игрока",
-// 		},
-// 	}, // действие сказать_игроку
-// },
+	{
+		{
+			1,
+			"Tristan",
+			"осмотреться",
+			map[string]string{
+				"Tristan": "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор. Кроме вас тут ещё Izolda",
+			},
+		}, // действие осмотреться
+		{
+			2,
+			"Izolda",
+			"осмотреться",
+			map[string]string{
+				"Izolda": "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор. Кроме вас тут ещё Tristan",
+			},
+		}, // действие осмотреться
+		{
+			3,
+			"Izolda",
+			"сказать Пора топать в универ",
+			map[string]string{
+				"Tristan": "Izolda говорит: Пора топать в универ",
+				"Izolda":  "Izolda говорит: Пора топать в универ",
+			},
+		}, // действие сказать
+		{
+			4,
+			"Tristan",
+			"сказать_игроку Izolda Может ещё по чаю лучше?",
+			map[string]string{
+				"Izolda": "Tristan говорит вам: Может ещё по чаю лучше?",
+			},
+		}, // действие сказать_игроку
+		{
+			5,
+			"Izolda",
+			"сказать_игроку Tristan",
+			map[string]string{
+				"Tristan": "Izolda выразительно молчит, смотря на вас",
+			},
+		}, // действие сказать_игроку
+		{
+			6,
+			"Tristan",
+			"идти коридор",
+			map[string]string{
+				"Tristan": "ничего интересного. можно пройти - кухня, комната, улица",
+			},
+		}, // действие идти
+		{
+			7,
+			"Izolda",
+			"сказать_игроку Tristan",
+			map[string]string{
+				"Izolda": "тут нет такого игрока",
+			},
+		}, // действие сказать_игроку
+	},
 }
 
 func TestGame1(t *testing.T) {
@@ -177,15 +186,23 @@ func TestGame1(t *testing.T) {
 			"Izolda":  NewPlayer("Izolda"),
 		}
 
+		mu := &sync.Mutex{}
+
 		go func() {
 			output := players["Tristan"].GetOutput()
-			for lastOutput["Tristan"] = range output {
+			for msg := range output {
+				mu.Lock()
+				lastOutput["Tristan"] = msg
+				mu.Unlock()
 			}
 		}()
 
 		go func() {
 			output := players["Izolda"].GetOutput()
-			for lastOutput["Izolda"] = range output {
+			for msg := range output {
+				mu.Lock()
+				lastOutput["Izolda"] = msg
+				mu.Unlock()
 			}
 		}()
 
@@ -196,6 +213,7 @@ func TestGame1(t *testing.T) {
 		for _, item := range commands {
 			lastOutput = map[string]string{}
 			players[item.player].HandleInput(item.command)
+			time.Sleep(time.Microsecond)
 			runtime.Gosched() // дадим считать ответ
 			if !reflect.DeepEqual(lastOutput, item.answers) {
 				t.Error("case:", caseNum, item.step,

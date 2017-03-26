@@ -1,17 +1,37 @@
 package main
 
+// сокет(разъем)- это связь между процесами
+// ТСР - это сокет связывающий процессы по протоколу ТСР
+
+// чтобы открыть сокет нужно вызвать системную функцию BIND
+// bind - будет подключаться к порту и слушать его
+// 127.0.0.1 (а если точнее, сеть 127/8, он же loopback, он же localhost) — IP-адрес,
+// с помощью которого компьютер может обратиться по сети к самому себе,
+// независимо от наличия у него подключения к сети,
+// вида одной и адреса компьютера в ней.св
+
+// Отличие  TCP от UDP
+// TCP гарантирует доставку пакетов данных в неизменных виде, последовательности и без потерь, UDP ничего не гарантирует.
+// TCP требует заранее установленного соединения, UDP соединения не требует.
+// UDP обеспечивает более высокую скорость передачи данных.
+// TCP надежнее и осуществляет контроль над процессом обмена данными.
+// UDP предпочтительнее для программ, воспроизводящих потоковое видео, видеофонии и телефонии, сетевых игр.
+
 import (
+	"bufio"
 	"fmt"
 	"net"
-	"bufio"
 )
 
 func main() {
 	// Bind на порт ОС
+	// tcp/udp/tcp4/tcp6
 	listener, _ := net.Listen("tcp", ":5000")
 
 	for {
 		// ждём пока не придёт клиент
+		// в сокет все время сваливается
+		// берем из очереди соединение и обрабатыаем
 		conn, err := listener.Accept()
 
 		if err != nil {
@@ -23,21 +43,23 @@ func main() {
 		fmt.Println("Connected")
 
 		// создаём Reader для чтения информации из сокета
+		// позволяет читать из буфера
 		bufReader := bufio.NewReader(conn)
-		fmt.Println("Start reading")
+		go func(c net.Conn) {
+			fmt.Println("Start reading")
+			defer conn.Close()
+			for {
+				// побайтово читаем
+				rbyte, err := bufReader.ReadByte()
 
-			//defer conn.Close()
+				if err != nil {
+					fmt.Println("Can not read!", err)
+					break
+				}
 
-		for {
-			// побайтово читаем
-			rbyte, err := bufReader.ReadByte()
-
-			if err != nil {
-				fmt.Println("Can not read!", err)
-				break
+				fmt.Print(string(rbyte))
+				conn.Write([]byte("receive"))
 			}
-
-			fmt.Print(string(rbyte))
-		}
+		}(conn)
 	}
 }
