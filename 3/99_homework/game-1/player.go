@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	// "time"
+	"time"
 )
 
 func (p *Player) HandleInput(command string) {
@@ -12,7 +12,7 @@ func (p *Player) HandleInput(command string) {
 		command: command,
 		player:  p,
 	}
-	// time.Sleep(time.Millisecond)
+	time.Sleep(time.Millisecond / 100)
 }
 
 func (p *Player) GetOutput() chan string {
@@ -63,7 +63,7 @@ func (p *Player) Say(command []string) {
 }
 func (p *Player) Tell(command []string) {
 	RoomPlayer := GetRoom(p.InRoom)
-	if RoomPlayer.Players[command[0]] == nil || RoomPlayer.Players[command[0]].InRoom != p.InRoom {
+	if RoomPlayer.Players[command[0]] == nil {
 		p.Msg <- "тут нет такого игрока"
 		return
 	}
@@ -95,6 +95,8 @@ func (p *Player) MoveTo(r *Room) {
 		p.Msg <- GetRoom(p.InRoom).notPassability(r)
 		return
 	}
+	G.Rooms[p.InRoom].Players[p.Name] = nil
+	G.Rooms[r.Name].Players[p.Name] = p
 	p.InRoom = r.Name
 	msg := r.Msg["enter"]
 	var rooms []string
