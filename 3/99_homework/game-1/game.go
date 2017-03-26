@@ -26,8 +26,8 @@ func NewPlayer(name string) (player *Player) {
 	G.Players = map[string]*Player{
 		name: {
 			Name: name,
-			msg: &Chan{
-				msg: make(chan string),
+			Msg: &Chan{
+				ChanMsg: make(chan string),
 			},
 		},
 	}
@@ -40,50 +40,9 @@ func initGame() {
 		Aliases: make(map[string]string),
 		msgin:   make(chan *Command)}
 
-	G.Rooms = map[string]*Room{
-		"кухня": InitRoom("кухня"),
-		"коридор": {
-			Name: "коридор",
-			Msg: map[string]string{
-				"enter": "ничего интересного.",
-				"lookaround": "	Ты нахдишься в коридоре, тут страшно",
-			}, Things: map[string]bool{
-				"ничего": true,
-			}, Subjects: map[string]ObjSubj{
-				"шкаф":  {Exist: true, Lock: true, Key: "кот"},
-				"дверь": {Exist: true, Lock: true, Key: "ключи", NameRoom: "улица"},
-			}, LinkRoom: map[string]string{
-				"кухня":   "exist",
-				"комната": "exist",
-				"улица":   "lock"},
-		},
-		"комната": {
-			Name: "комната",
-			Msg: map[string]string{
-				"enter":      "ты в своей комнате.",
-				"lookaround": "на столе: ",
-				"backact":    "на стуле - ",
-				"end":        "можно пройти - коридор",
-			}, Things: map[string]bool{
-				"ключи":     true,
-				"конспекты": true,
-				"рюкзак":    true,
-			}, Subjects: map[string]ObjSubj{
-				"тумбочка": {Exist: true, Lock: true, Key: "хлопок в ладоши"},
-			}, LinkRoom: map[string]string{
-				"коридор": "exist"},
-		},
-		"улица": {
-			Name: "улица",
-			Msg: map[string]string{
-				"enter":      "на улице весна.",
-				"lookaround": "ты находишься на улице, как же прекрасен свежый воздух",
-				"locked":     "дверь закрыта",
-			}, Subjects: map[string]ObjSubj{
-				"шкаф": {Exist: true, Lock: true, Key: "кот"},
-			}, LinkRoom: map[string]string{
-				"коридор": "exist"},
-		},
+	G.Rooms = InitRoom()
+	for name, room := range G.Rooms {
+		room.Name = name
 	}
 	G.Priory = []string{
 		"кухня",
@@ -101,5 +60,68 @@ func run() {
 	for cmd := range G.msgin {
 		cmd.player.don(cmd.command)
 		G.wg.Done()
+	}
+}
+
+func InitRoom() map[string]*Room {
+	return map[string]*Room{
+		"кухня": {
+			Act: "идти в универ. ",
+			Msg: map[string]string{
+				"enter":      "кухня, ничего интересного.",
+				"lookaround": "ты находишься на кухне, на столе ",
+				"backact":    "надо собрать ",
+				"end":        "можно пройти - коридор",
+			}, Things: map[string]bool{
+				"чай": true,
+			}, Subjects: map[string]ObjSubj{
+				"ничего": {
+					Exist: true, Lock: true},
+			}, LinkRoom: map[string]string{
+				"коридор": "exist"},
+		},
+		"коридор": {
+			Msg: map[string]string{
+				"enter": "ничего интересного.",
+				"lookaround": "	Ты нахдишься в коридоре, тут страшно",
+			}, Things: map[string]bool{
+				"ничего": true,
+			}, Subjects: map[string]ObjSubj{
+				"шкаф": {
+					Exist: true, Lock: true, Key: "кот"},
+				"дверь": {
+					Exist: true, Lock: true, Key: "ключи", NameRoom: "улица"},
+			}, LinkRoom: map[string]string{
+				"кухня":   "exist",
+				"комната": "exist",
+				"улица":   "lock"},
+		},
+		"комната": {
+			Msg: map[string]string{
+				"enter":      "ты в своей комнате.",
+				"lookaround": "на столе: ",
+				"backact":    "на стуле - ",
+				"end":        "можно пройти - коридор",
+			}, Things: map[string]bool{
+				"ключи":     true,
+				"конспекты": true,
+				"рюкзак":    true,
+			}, Subjects: map[string]ObjSubj{
+				"тумбочка": {
+					Exist: true, Lock: true, Key: "хлопок в ладоши"},
+			}, LinkRoom: map[string]string{
+				"коридор": "exist"},
+		},
+		"улица": {
+			Msg: map[string]string{
+				"enter":      "на улице весна.",
+				"lookaround": "ты находишься на улице, как же хорошо",
+				"locked":     "дверь закрыта",
+			}, Subjects: map[string]ObjSubj{
+				"шкаф": {
+					Exist: true, Lock: true, Key: "кот"},
+			}, LinkRoom: map[string]string{
+				"коридор": "exist"},
+		},
 	}
 }
