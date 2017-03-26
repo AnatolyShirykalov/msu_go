@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
+	// "time"
 )
 
 func (p *Player) HandleInput(command string) {
@@ -12,7 +12,7 @@ func (p *Player) HandleInput(command string) {
 		command: command,
 		player:  p,
 	}
-	time.Sleep(time.Millisecond)
+	// time.Sleep(time.Millisecond)
 }
 
 func (p *Player) GetOutput() chan string {
