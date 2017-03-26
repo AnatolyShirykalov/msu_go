@@ -1,0 +1,28 @@
+GET ─получить данные
+PUT ─ создать данные
+POST ─ редактировать данные
+DELETE ─ удалить данные
+
+get - запросы на получение данные - все параметры прописаны в url
+post - обновление данных на сервере - 
+все параметры идут внизу(форматы json, unicode) 
+нельзя докавить в закладки и не кешируются, 
+
+Первая строка — это строка запроса, остальные — заголовки; тело сообщения отсутствует
+
+GET /index.php HTTP/1.1
+Host: example.com
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; ru; rv:1.9b5) Gecko/2008050509 Firefox/3.0b5
+Accept: text/html
+Connection: close
+
+Ответ:
+
+HTTP/1.0 200 OK
+Server: nginx/0.6.31
+Content-Language: ru
+Content-Type: text/html; charset=utf-8
+Content-Length: 1234
+Connection: close
+
+... САМА HTML-СТРАНИЦА ...

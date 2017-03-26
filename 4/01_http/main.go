@@ -1,12 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
-	"net/http"
 	"log"
+	"net/http"
 )
 
+// http текствый запрос
+// keep-alive - не будем закрывать соединение после того как нам пришел ответ
+// user-agent - с какого устроиства сделали запрос
+// accept-encoding - кодировка, которую поддерживает браузер
+
 func main() {
+	// на сервер приходит какой-то путь ресурса
+	// надо определить по какому пути слушать порт
+
+	// w - структура, которая вернеться пользователю
+	// r - запрос, который нам придет
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -21,8 +32,10 @@ func main() {
 		defer resp.Body.Close()
 
 		body, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println(body, "ttttt")
 
 		// статус - ОК
+		// http.StatusOK
 		w.WriteHeader(200)
 		w.Write(body)
 	})

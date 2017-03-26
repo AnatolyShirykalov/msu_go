@@ -5,45 +5,43 @@ import "fmt"
 var G Game
 
 func addPlayer(p *Player) {
-	G.Players[p.Name] = p
-	p.InRoom = GetRoom("кухня")
+	G.Rooms["кухня"].Players[p.Name] = p
+	p.InRoom = "кухня"
 }
+
 func GetRoom(name string) *Room {
 	r, ok := G.Rooms[name]
 	if ok {
 		return r
+	}
+	alias, ok1 := G.Aliases[name]
+	if ok1 {
+		return GetRoom(alias)
 	} else {
-		alias, ok1 := G.Aliases[name]
-		if ok1 {
-			return GetRoom(alias)
-		} else {
-			panic(fmt.Sprintf("Не могу найти комнату по ключу %s", name))
-		}
+		panic(fmt.Sprintf("Не могу найти комнату по ключу %s", name))
 	}
 }
 
 func NewPlayer(name string) (player *Player) {
-	G.Players = map[string]*Player{
-		name: {
-			Name: name,
-			Msg: &Chan{
-				ChanMsg: make(chan string),
-			},
-		},
+	p := &Player{
+		Name: name,
+		Msg:  make(chan string),
 	}
-	return G.Players[name]
+	return p
 }
 func initGame() {
 	G = Game{
 		Rooms:   make(map[string]*Room),
-		Players: make(map[string]*Player),
 		Aliases: make(map[string]string),
-		msgin:   make(chan *Command)}
+		msgin:   make(chan *Command),
+	}
 
 	G.Rooms = InitRoom()
 	for name, room := range G.Rooms {
+		room.Players = make(map[string]*Player)
 		room.Name = name
 	}
+
 	G.Priory = []string{
 		"кухня",
 		"комната",
@@ -53,13 +51,13 @@ func initGame() {
 	G.Aliases = map[string]string{
 		"улица": "домой",
 	}
+
 	go run()
 }
 
 func run() {
 	for cmd := range G.msgin {
 		cmd.player.don(cmd.command)
-		G.wg.Done()
 	}
 }
 
