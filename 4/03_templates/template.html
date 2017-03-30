@@ -40,8 +40,10 @@
 </head>
 <body>
     <div class="root">
+    <!-- здесь точка - map -->
         {{range $index, $value := .}}
             <div class="item{{if eq .Done true}} done{{end}}">
+            <!-- элемент map -->
                 <div class="title">{{.Name}}</div>
                 {{if IsNotDone .}}
                     <form action="/" method="post" class="form">

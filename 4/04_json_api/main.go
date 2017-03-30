@@ -3,15 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
-	"io/ioutil"
 )
 
 type Todo struct {
-	Name      string `json:"name"`
-	Done      bool   `json:"done"`
+	Name string `json:"name"`
+	Done bool   `json:"done"`
 }
 
 func main() {
@@ -60,7 +60,9 @@ func main() {
 			todos = append(todos, todo)
 		// PUT для обновления существующей информации
 		case http.MethodPut:
+			// обновленный ид передается в url
 			id := r.URL.Path[len("/todos/"):]
+			// 10 -система счисления и размер значения 0 - по умолчанию размер инта
 			index, _ := strconv.ParseInt(id, 10, 0)
 			todos[index].Done = true
 		default:

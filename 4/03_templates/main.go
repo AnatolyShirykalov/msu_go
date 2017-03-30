@@ -16,7 +16,9 @@ func IsNotDone(todo Todo) bool {
 	return !todo.Done
 }
 
+//внешний шаблон
 func main() {
+	// создаем шаблон и передаем функцию
 	tmpl, err := template.New("template.html").Funcs(template.FuncMap{"IsNotDone": IsNotDone}).ParseFiles("template.html")
 	if err != nil {
 		log.Fatal("Can not expand template", err)

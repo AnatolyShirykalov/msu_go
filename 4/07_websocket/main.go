@@ -22,7 +22,11 @@ type JokeResponse struct {
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	// мы нахдимся в майл ру и делаем запрос в яндекс и ничего не получиться, crossorigian
+	// браузер можешь обновлять данные по этому домену
+	// в браузере они за безопасность и сделают все возможное чтобы вас не взломали
 	CheckOrigin: func(r *http.Request) bool {
+		// любой запрос подходит
 		return true
 	},
 }
@@ -34,6 +38,7 @@ type Bus struct {
 	clients   map[*websocket.Conn]bool
 }
 
+// мапу удобно удалять
 func (b *Bus) Run() {
 	for {
 		select {
@@ -68,6 +73,7 @@ func NewBus() *Bus {
 func runJoker(b *Bus) {
 	for {
 		// каждые 5 секунд ходим за шутками
+		// запись в нано секундах
 		<-time.After(5 * time.Second)
 		log.Println("Its joke time!")
 		b.broadcast <- getJoke()
@@ -92,6 +98,7 @@ func getJoke() []byte {
 	return []byte(joke.Value.Joke)
 }
 
+// нужно делать операцию ping
 func main() {
 
 	bus := NewBus()

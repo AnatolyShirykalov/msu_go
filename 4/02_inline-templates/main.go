@@ -3,15 +3,22 @@ package main
 import (
 	"html/template"
 	"io/ioutil"
-	"net/http"
 	"log"
+	"net/http"
 )
 
 func main() {
 	// создаем новый шаблон из строки
 	tmpl := template.New("main")
 	tmpl, _ = tmpl.Parse(
-		`<div style="display: inline-block; border: 1px solid #aaa; border-radius: 3px; padding: 30px; margin: 20px;">
+		`<div style="display: inline-block; 
+		border: 1px solid #aaa;
+		border-radius: 3px; 
+		padding: 30px; 
+		margin: 20px;">
+		{{if ne . "/str"}}
+		no str
+		{{end}}
 			<pre>{{.}}</pre>
 		</div>`)
 
@@ -20,6 +27,7 @@ func main() {
 
 		c := http.Client{}
 		resp, err := c.Get("http://artii.herokuapp.com/make?text=" + path)
+		// если не смогли получить текст из IP
 		if err != nil {
 			// при ошибке кидаем 500 и уходим
 			log.Println(err)
