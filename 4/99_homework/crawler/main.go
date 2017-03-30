@@ -9,8 +9,10 @@ package main
 // Результат отсортирован в порядке появления на сайте.
 
 import (
+	// "fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 func Crawl(host string) []string {
@@ -18,6 +20,7 @@ func Crawl(host string) []string {
 	slisLink["/page1.html"] = true
 	final := make(map[string]int)
 	final["/page1.html"] = 0
+
 	while(slisLink, host, final)
 	res := make([]string, len(final))
 	for elem, ind := range final {
@@ -27,66 +30,40 @@ func Crawl(host string) []string {
 }
 
 func Parser(bodyBytes []byte) map[string]bool {
-	index := 0
 	start := ""
-	str := ""
+	start2 := 0
+	lenabaseref := "base href="
 
-	lenabaseref := len("base href=")
-	for {
-		if index < len(bodyBytes)-lenabaseref {
-			baseref := string(bodyBytes[index : index+lenabaseref])
-			if baseref == "base href=" {
-				index += lenabaseref + 1
-				str = ""
-				for link := index; link < len(bodyBytes); link++ {
-					if string(bodyBytes[index]) != "/" {
-						break
-					}
-					if string(bodyBytes[link+3]) == ">" {
-						index += link
-						break
-					}
-					str = str + string(bodyBytes[link])
-				}
-				if str != "" {
-					if str != "/index.html" {
-						start = str
-					}
-					break
-				}
-			}
-			index++
-		} else {
-			index = 0
-			break
-		}
+	bodyStr := string(bodyBytes)
+	start1 := strings.Index(bodyStr, lenabaseref)
+	if start1 > -1 {
+		start1 += len(lenabaseref)
+		start2 = strings.Index(bodyStr, " />")
+		start = string(bodyBytes[start1+1 : start2-1])
+	}
+	if start == "/index.html" {
+		start = ""
 	}
 
+	lenahref := "a href="
 	slisLink := make(map[string]bool)
-	lenahref := len("a href=")
-	for {
-		if index < len(bodyBytes)-lenahref {
-			ahref := string(bodyBytes[index : index+lenahref])
-			if ahref == "a href=" {
-				index += lenahref + 1
-				str = ""
 
-				for link := index; link < len(bodyBytes); link++ {
-					if string(bodyBytes[link+1]) == ">" {
-						break
-					}
-					if string(bodyBytes[index:index+4]) == "http" {
-						break
-					}
-					str = str + string(bodyBytes[link])
+	bodyStr = string(bodyBytes[start2:])
+	splitBodyStr := strings.Split(bodyStr, lenahref)
+
+	if len(splitBodyStr) > 1 {
+		for _, elemsplit := range splitBodyStr[1:] {
+			start2 = strings.Index(elemsplit, ">")
+			if start2 > -1 {
+				ref := start + string(elemsplit[1:start2-1])
+				if strings.Index(ref, "/") != 0 {
+					break
 				}
-				if str != "" {
-					slisLink[start+str] = true
-				}
+				// fmt.Println(ref)
+				slisLink[ref] = true
+			} else {
+				panic("a href not found >")
 			}
-			index++
-		} else {
-			break
 		}
 	}
 	return slisLink
@@ -97,24 +74,23 @@ func while(input map[string]bool, host string, final map[string]int) {
 		var flag bool
 
 		client := http.Client{}
-		resp1, _ := client.Get(host + aref)
-		bodyBytes1, ok := ioutil.ReadAll(resp1.Body)
+		resp, _ := client.Get(host + aref)
+		bodyBytes, ok := ioutil.ReadAll(resp.Body)
 		if ok != nil {
-			break
+			panic(ok)
 		}
-		defer resp1.Body.Close()
-
-		if len(bodyBytes1) > 6 {
-			if string(bodyBytes1[:3]) == "404" {
+		resp.Body.Close()
+		if len(bodyBytes) > 6 {
+			if string(bodyBytes[:3]) == "404" {
 				break
 			}
-			if string(bodyBytes1[:6]) == "<html>" {
+			if string(bodyBytes[:6]) == "<html>" {
 
 				if aref != "/page1.html" {
 					lee := len(final)
 					final[aref] = lee
 				}
-				sl := Parser(bodyBytes1)
+				sl := Parser(bodyBytes)
 
 				for ref := range sl {
 					if _, ok := final[ref]; !ok {
