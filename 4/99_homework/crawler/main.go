@@ -80,7 +80,7 @@ func while(input map[string]bool, host string, final map[string]int) {
 		}
 		resp.Body.Close()
 
-		if resp.StatusCode == 200 {
+		if resp.StatusCode == http.StatusOK {
 			final[aref] = len(final)
 			sl := Parser(bodyBytes)
 			for ref := range sl {
