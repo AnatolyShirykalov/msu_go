@@ -9,23 +9,23 @@ package main
 // Результат отсортирован в порядке появления на сайте.
 
 import (
-	// "fmt"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
 func Crawl(host string) []string {
-	slisLink := make(map[string]bool)
-	slisLink["/page1.html"] = true
 	final := make(map[string]int)
-	final["/page1.html"] = 0
+	input := make(map[string]bool)
 
-	while(slisLink, host, final)
+	while(input, host, final)
+
 	res := make([]string, len(final))
 	for elem, ind := range final {
 		res[ind] = elem
 	}
+
 	return res
 }
 
@@ -59,7 +59,6 @@ func Parser(bodyBytes []byte) map[string]bool {
 				if strings.Index(ref, "/") != 0 {
 					break
 				}
-				// fmt.Println(ref)
 				slisLink[ref] = true
 			} else {
 				panic("a href not found >")
@@ -69,9 +68,9 @@ func Parser(bodyBytes []byte) map[string]bool {
 	return slisLink
 }
 func while(input map[string]bool, host string, final map[string]int) {
+	var flag bool
 	for aref := range input {
 		exist := make(map[string]bool)
-		var flag bool
 
 		client := http.Client{}
 		resp, _ := client.Get(host + aref)
@@ -80,32 +79,30 @@ func while(input map[string]bool, host string, final map[string]int) {
 			panic(ok)
 		}
 		resp.Body.Close()
-		if len(bodyBytes) > 6 {
-			if string(bodyBytes[:3]) == "404" {
+
+		if resp.StatusCode == 200 {
+			final[aref] = len(final)
+			sl := Parser(bodyBytes)
+			for ref := range sl {
+				if _, ok := final[ref]; !ok {
+					exist[ref] = true
+					flag = true
+				}
+
+			}
+			if flag {
+				while(exist, host, final)
 				break
 			}
-			if string(bodyBytes[:6]) == "<html>" {
-
-				if aref != "/page1.html" {
-					lee := len(final)
-					final[aref] = lee
-				}
-				sl := Parser(bodyBytes)
-
-				for ref := range sl {
-					if _, ok := final[ref]; !ok {
-						exist[ref] = true
-						flag = true
-					}
-
-				}
-
-				if flag {
-					while(exist, host, final)
-					break
-				}
-			}
+		} else {
+			fmt.Println("status ", string(bodyBytes), "ref ", aref, "\n")
 		}
+	}
+	if len(input) == 0 {
+		client := http.Client{}
+		resp, _ := client.Get(host)
+		input[resp.Request.URL.RequestURI()] = true
+		while(input, host, final)
 	}
 	return
 }

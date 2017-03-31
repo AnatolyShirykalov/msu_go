@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 // Тип HandlerFunc - это адаптер, позволяющий использовать обычные функции в качестве обработчиков HTTP
@@ -38,7 +39,6 @@ func Case(root string, f func(string) []string) []string {
 			http.ServeFile(w, r, "testdata/"+root+"/"+req)
 		}
 	}))
-	// fmt.Println(ts.URL)
 	defer ts.Close()
 	return f(ts.URL)
 }
