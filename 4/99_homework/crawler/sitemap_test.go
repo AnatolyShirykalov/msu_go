@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
-	"time"
 )
 
 // Тип HandlerFunc - это адаптер, позволяющий использовать обычные функции в качестве обработчиков HTTP
