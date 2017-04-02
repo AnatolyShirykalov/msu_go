@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -22,6 +23,8 @@ func main() {
 		defer r.Body.Close()
 
 		c := http.Client{}
+		// делает запрос, который возвращает какой-то json
+		// { "type": "success", "value": { "id": 477, "joke": "Chuck Norris can access private methods.", "categories": ["nerdy"] } }
 		resp, err := c.Get("http://api.icndb.com/jokes/random?limitTo=[nerdy]")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -30,13 +33,13 @@ func main() {
 
 		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println(string(body))
 		joke := JokeResponse{}
-
+		// body - слайс байт и &joke - указатель на структуру в которую нужно все положить
 		err = json.Unmarshal(body, &joke)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		w.Write([]byte(joke.Value.Joke))
 	})
 
