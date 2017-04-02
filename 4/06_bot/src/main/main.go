@@ -105,6 +105,8 @@ func main() {
 		log.Println("received text: ", update.Message.Text)
 
 		switch update.Message.Text {
+		case "Cp":
+			message = tgbotapi.NewMessage(update.Message.Chat.ID, getJoke())
 		case "Get Joke":
 			// Если пользователь нажал на кнопку, то придёт сообщение "Get Joke"
 			message = tgbotapi.NewMessage(update.Message.Chat.ID, getJoke())

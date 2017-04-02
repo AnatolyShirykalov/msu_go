@@ -95,7 +95,7 @@ func while(input map[string]bool, host string, final map[string]int) {
 				break
 			}
 		} else {
-			fmt.Println("status ", string(bodyBytes), "ref ", aref, "\n")
+			fmt.Println("status ", resp.Status, "ref ", aref, "\n")
 		}
 	}
 	if len(input) == 0 {
